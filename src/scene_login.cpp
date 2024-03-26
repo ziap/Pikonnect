@@ -1,9 +1,9 @@
-#include "scene.h"
 #include "config.h"
-#include <string.h>
+#include "scene.h"
+
 #include <raylib.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 Scene Scene_login_update(Game *game, float dt) {
   (void)dt;
@@ -68,7 +68,11 @@ Scene Scene_login_update(Game *game, float dt) {
     if (k >= 0x20 && k < 0x7f) {
       if (box->len + 1 == box->cap) {
         box->cap *= 2;
-        box->input = (char*)realloc(box->input, box->cap);
+        char *new_input = new char[box->cap];
+        memcpy(new_input, box->input, box->len + 1);
+
+        delete[] box->input;
+        box->input = new_input;
       }
       box->input[box->len++] = k;
       box->input[box->len] = '\0';
@@ -86,7 +90,15 @@ Scene Scene_login_update(Game *game, float dt) {
         break;
       }
     }
-    if (logged_in) return SCENE_MAIN;
+    if (logged_in) {
+      User *login_result = UserTable_login(&game->users, menu->textboxes[TEXTBOX_USERNAME].input, menu->textboxes[TEXTBOX_PASSWORD].input);
+      if (login_result == nullptr) {
+        snprintf(menu->message, sizeof(menu->message), "Wrong password for user %s!", menu->textboxes[TEXTBOX_USERNAME].input);
+      } else {
+        game->current_user = login_result;
+        return SCENE_MAIN;
+      }
+    }
   }
 
   float x0 = (float)(SCREEN_WIDTH - FIELD_WIDTH) / 2;

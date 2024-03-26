@@ -8,6 +8,7 @@ int main() {
   SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
 
+  Scene scene = SCENE_LOGIN;
   Game game = Game_create();
 
   while (!WindowShouldClose()) {
@@ -17,7 +18,7 @@ int main() {
     ClearBackground(WHITE);
   
     // Update the game
-    game.scene = Scene_update_functions[game.scene](&game, dt);
+    scene = Scene_update_functions[scene](&game, dt);
 
     // Display the FPS
     char buf[64];

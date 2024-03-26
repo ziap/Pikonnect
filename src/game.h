@@ -2,17 +2,12 @@
 #define GAME_H
 
 #include "login.h"
-
-enum Scene {
-  SCENE_LOGIN,
-  SCENE_MAIN,
-  SCENE_GAME,
-  SCENE_LEN
-};
+#include "data.h"
 
 struct Game {
-  Scene scene;
+  UserTable users;
   LoginMenu login_menu;
+  User *current_user;
 };
 
 extern Game Game_create(void);
