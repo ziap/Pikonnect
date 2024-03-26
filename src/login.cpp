@@ -1,7 +1,7 @@
 #include "login.h"
 
 void LoginMenu_init(LoginMenu *menu) {
-  menu->selected_textbox = 0;
+  menu->selected_textbox = TEXTBOX_USERNAME;
   menu->message[0] = '\0';
 
   const int INIT_CAP = 16;

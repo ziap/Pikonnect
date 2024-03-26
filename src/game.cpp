@@ -5,6 +5,7 @@ Game Game_create() {
   game.current_user = nullptr;
   UserTable_load(&game.users);
   LoginMenu_init(&game.login_menu);
+  HomeMenu_init(&game.home_menu);
 
   return game;
 }

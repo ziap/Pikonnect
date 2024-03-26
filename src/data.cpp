@@ -64,6 +64,7 @@ void UserTable_load(UserTable *table) {
       if (bytes[i] == '\0' && bytes[i - 1] == '\0') ++table->len;
     }
 
+    // Allocate an extra user in case of new user creation
     table->users = new User[table->len + 1];
     const char *ptr = bytes;
     for (int i = 0; i < table->len; ++i) {

@@ -7,14 +7,14 @@ struct TextBoxData {
   int cap;
 };
 
-enum TextBoxes {
+enum TextBox {
   TEXTBOX_USERNAME,
   TEXTBOX_PASSWORD,
   TEXTBOX_LEN
 };
 
 struct LoginMenu {
-  int selected_textbox;
+  TextBox selected_textbox;
   char message[256];
   TextBoxData textboxes[TEXTBOX_LEN];
 };

@@ -35,11 +35,11 @@ Scene Scene_login_update(Game *game, float dt) {
 
   if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
     if (IsKeyPressed(KEY_N) || IsKeyPressedRepeat(KEY_N)) {
-      menu->selected_textbox = (menu->selected_textbox + 1) % TEXTBOX_LEN;
+      menu->selected_textbox = (TextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
     }
 
     if (IsKeyPressed(KEY_P) || IsKeyPressedRepeat(KEY_P)) {
-      menu->selected_textbox = (menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN;
+      menu->selected_textbox = (TextBox)((menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN);
     }
 
     if (IsKeyPressed(KEY_L) || IsKeyPressedRepeat(KEY_L)) {
@@ -49,11 +49,11 @@ Scene Scene_login_update(Game *game, float dt) {
   }
 
   if (IsKeyPressed(KEY_DOWN) || IsKeyPressedRepeat(KEY_DOWN) || IsKeyPressed(KEY_TAB) || IsKeyPressedRepeat(KEY_TAB)) {
-    menu->selected_textbox = (menu->selected_textbox + 1) % TEXTBOX_LEN;
+    menu->selected_textbox = (TextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
   }
 
   if (IsKeyPressed(KEY_UP) || IsKeyPressedRepeat(KEY_UP)) {
-    menu->selected_textbox = (menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN;
+    menu->selected_textbox = (TextBox)((menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN);
   }
 
   TextBoxData *box = menu->textboxes + menu->selected_textbox;
@@ -85,7 +85,7 @@ Scene Scene_login_update(Game *game, float dt) {
     for (int i = 0; i < TEXTBOX_LEN; ++i) {
       if (menu->textboxes[i].len == 0) {
         snprintf(menu->message, sizeof(menu->message), "Please enter your %s!", textbox_names[i]);
-        menu->selected_textbox = i;
+        menu->selected_textbox = (TextBox)i;
         logged_in = false;
         break;
       }
@@ -96,7 +96,7 @@ Scene Scene_login_update(Game *game, float dt) {
         snprintf(menu->message, sizeof(menu->message), "Wrong password for user %s!", menu->textboxes[TEXTBOX_USERNAME].input);
       } else {
         game->current_user = login_result;
-        return SCENE_MAIN;
+        return SCENE_HOME;
       }
     }
   }
@@ -113,8 +113,11 @@ Scene Scene_login_update(Game *game, float dt) {
   const int TITLE_SIZE = 72;
   const char title[] = "Pikachu Game";
   DrawText(title, (SCREEN_WIDTH - MeasureText(title, TITLE_SIZE)) / 2, 150, TITLE_SIZE, DARKBLUE);
+
+  int label_y = 320;
   for (int i = 0; i < TEXTBOX_LEN; ++i) {
-    DrawText(textbox_labels[i], x0, 320 + FIELD_SIZE * i * 2, FIELD_SIZE, DARKGRAY);
+    DrawText(textbox_labels[i], x0, label_y, FIELD_SIZE, DARKGRAY);
+    label_y += FIELD_SIZE * 2;
   }
 
   const char *ptr = menu->textboxes[TEXTBOX_USERNAME].input;
@@ -127,12 +130,15 @@ Scene Scene_login_update(Game *game, float dt) {
   pwd[pwd_len] = 0;
   DrawText(pwd, x0 + max_width, 320 + FIELD_SIZE * 2, FIELD_SIZE, BLACK);
 
+  int field_y = 320 + FIELD_SIZE;
   for (int i = 0; i < menu->selected_textbox; ++i) {
-    DrawRectangle(x0 + max_width, 320 + FIELD_SIZE * (i * 2 + 1), INPUT_WIDTH, 5, GRAY);
+    DrawRectangle(x0 + max_width, field_y, INPUT_WIDTH, 5, GRAY);
+    field_y += FIELD_SIZE * 2;
   }
 
+  field_y += FIELD_SIZE * 2;
   for (int i = menu->selected_textbox + 1; i < TEXTBOX_LEN; ++i) {
-    DrawRectangle(x0 + max_width, 320 + FIELD_SIZE * (i * 2 + 1), INPUT_WIDTH, 5, GRAY);
+    DrawRectangle(x0 + max_width, field_y, INPUT_WIDTH, 5, GRAY);
   }
 
   const Color selector_color = menu->message[0] ? RED : DARKBLUE;

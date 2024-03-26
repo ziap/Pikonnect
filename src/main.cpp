@@ -5,7 +5,7 @@
 
 int main() {
   // Initalize the window
-  SetConfigFlags(FLAG_VSYNC_HINT);
+  // SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
 
   Scene scene = SCENE_LOGIN;
@@ -23,7 +23,7 @@ int main() {
     // Display the FPS
     char buf[64];
     snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
-    DrawText(buf, 20, 20, 20, GREEN);
+    DrawText(buf, 20, SCREEN_HEIGHT - 40, 20, GREEN);
     EndDrawing();
   }
 
