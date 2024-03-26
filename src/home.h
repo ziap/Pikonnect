@@ -12,7 +12,7 @@ enum Selection {
 
 struct HomeMenu {
   Selection current_selection;
-  uint32_t selection_interpolation[SELECTION_LEN];
+  float selection_lerp[SELECTION_LEN];
 };
 
 extern void HomeMenu_init(HomeMenu *menu);
