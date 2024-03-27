@@ -1,16 +1,17 @@
 #ifndef DATA_H
 #define DATA_H
 
-#include <stdint.h>
+#include "config.h"
 
 struct User {
   char* name;
   uint64_t password_hash;
+  uint32_t solve_time[LEVEL_COUNT];
 };
 
 struct UserTable {
   User *users;
-  int len;
+  uint32_t len;
 };
 
 extern void UserTable_load(UserTable *table);

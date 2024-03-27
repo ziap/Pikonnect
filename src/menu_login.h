@@ -1,5 +1,5 @@
-#ifndef LOGIN_H
-#define LOGIN_H
+#ifndef MENU_LOGIN_H
+#define MENU_LOGIN_H
 
 struct TextBoxData {
   char *input;

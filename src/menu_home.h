@@ -1,5 +1,5 @@
-#ifndef HOME_H
-#define HOME_H
+#ifndef MENU_HOME_H
+#define MENU_HOME_H
 
 #include <stdint.h>
 

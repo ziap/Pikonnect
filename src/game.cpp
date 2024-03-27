@@ -6,6 +6,7 @@ Game Game_create() {
   UserTable_load(&game.users);
   LoginMenu_init(&game.login_menu);
   HomeMenu_init(&game.home_menu);
+  LevelsMenu_init(&game.level_menu);
 
   return game;
 }

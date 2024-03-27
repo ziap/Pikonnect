@@ -1,7 +1,7 @@
 #include "data.h"
 
+#include <cstdint>
 #include <string.h>
-#include <assert.h>
 #include <fstream>
 
 const char data_path[] = "users.db";
@@ -9,7 +9,8 @@ const char data_path[] = "users.db";
 static uint64_t mix(uint64_t h) {
   h ^= h >> 23;
   h *= 0x2127599bf4325c37ULL;
-  return h ^ h >> 47;
+  h ^= h >> 47;
+  return h;
 }
 
 // Copied from: https://code.google.com/archive/p/fast-hash/
@@ -59,23 +60,24 @@ void UserTable_load(UserTable *table) {
     char *bytes = new char[file_size];
     fin.read(bytes, file_size);
 
-    table->len = 0;
-    for (int i = 1; i < file_size; ++i) {
-      if (bytes[i] == '\0' && bytes[i - 1] == '\0') ++table->len;
-    }
-
     // Allocate an extra user in case of new user creation
-    table->users = new User[table->len + 1];
     const char *ptr = bytes;
-    for (int i = 0; i < table->len; ++i) {
+    memcpy(&table->len, ptr, sizeof(table->len));
+    table->users = new User[table->len + 1];
+    ptr += sizeof(table->len);
+
+    for (uint32_t i = 0; i < table->len; ++i) {
+      User *user = table->users + i;
       int len = strlen(ptr);
-      table->users[i].name = new char[len + 1];
+      user->name = new char[len + 1];
       memcpy(table->users[i].name, ptr, len + 1);
       ptr += len + 1;
-      memcpy(&table->users[i].password_hash, ptr, 8);
-      ptr += 8;
-      assert(*ptr == '\0' && *(ptr + 1) == '\0');
-      ptr += 2;
+      memcpy(&user->password_hash, ptr, sizeof(user->password_hash));
+      ptr += sizeof(user->password_hash);
+      for (int j = 0; j < LEVEL_COUNT; ++j) {
+        memcpy(user->solve_time + j, ptr, sizeof(user->solve_time[j]));
+        ptr += sizeof(user->solve_time[j]);
+      }
     }
 
     delete[] bytes;
@@ -87,26 +89,28 @@ void UserTable_load(UserTable *table) {
 
 void UserTable_save(UserTable *table) {
   std::ofstream fout(data_path, std::ios::binary | std::ios::ate);
-  for (int i = 0; i < table->len; ++i) {
-    char *ptr = table->users[i].name;
+  fout.write((char*)&table->len, sizeof(table->len));
+  for (uint32_t i = 0; i < table->len; ++i) {
+    User *user = table->users + i;
+    char *ptr = user->name;
     int len = strlen(ptr);
     fout.write(ptr, len + 1);
-    char buf[8];
-    uint64_t tmp = table->users[i].password_hash;
-    for (int j = 0; j < 8; ++j) {
-      buf[j] = tmp & 0xff;
-      tmp >>= 8;
+    uint64_t hash = user->password_hash;
+    fout.write((char*)&hash, sizeof(hash));
+    for (int j = 0; j < LEVEL_COUNT; ++j) {
+      uint32_t time = user->solve_time[j];
+      fout.write((const char*)&time, sizeof(time));
     }
-    fout.write(buf, sizeof(buf));
-    fout.write("\0\0", 2);
     delete[] ptr;
   }
+
+  delete[] table->users;
 }
 
 User *UserTable_login(UserTable *table, const char *username, const char *password) {
   uint64_t hash = fasthash64(password, strlen(password), 42);
 
-  for (int i = 0; i < table->len; ++i) {
+  for (uint32_t i = 0; i < table->len; ++i) {
     User *user = table->users + i;
     if (strcmp(username, user->name) == 0) {
       return hash == user->password_hash ? user : nullptr;
@@ -118,6 +122,10 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
   user->name = new char[len + 1];
   memcpy(user->name, username, len + 1);
   user->password_hash = hash;
+
+  for (int i = 0; i < LEVEL_COUNT; ++i) {
+    user->solve_time[i] = NOT_SOLVED;
+  }
 
   return user;
 }

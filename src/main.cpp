@@ -5,7 +5,7 @@
 
 int main() {
   // Initalize the window
-  SetConfigFlags(FLAG_VSYNC_HINT);
+  // SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
 
   Scene scene = SCENE_LOGIN;
