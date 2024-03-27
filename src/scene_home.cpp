@@ -2,11 +2,6 @@
 #include "config.h"
 #include <raylib.h>
 
-// Smoothstep function: https://en.wikipedia.org/wiki/Smoothstep
-static float ease_cubic(float t) {
-  return t * t * (3.0f - 2.0f * t);
-}
-
 static bool is_pressing_down() {
   if (IsKeyPressed(KEY_J) || IsKeyPressed(KEY_DOWN) || IsKeyPressedRepeat(KEY_J) || IsKeyPressedRepeat(KEY_DOWN)) {
     return true;
@@ -91,7 +86,7 @@ Scene Scene_home_update(Game *game, float dt) {
 
   int selection_y = HEADER_HEIGHT + (REMAINING_HEIGHT - 112 * SELECTION_LEN - 32 * (SELECTION_LEN - 1)) / 2;
   for (int i = 0; i < SELECTION_LEN; ++i) {
-    const int offset = t - (t * 0.3f) * ease_cubic(menu->selection_lerp[i]);
+    const int offset = t - (t * 0.3f) * easing_cubic(menu->selection_lerp[i]);
     DrawRectangle(32 + offset, selection_y, (SCREEN_WIDTH - 32) - offset, 112, menu_colors[i]);
     const char *txt = menu_names[i];
     DrawText(txt, 192 + offset, selection_y + 32, 48, BLACK);

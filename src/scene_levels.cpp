@@ -4,7 +4,7 @@
 #include <raylib.h>
 
 Scene Scene_levels_update(Game *game, float dt) {
-  // LevelsMenu *menu = &game->level_menu;
+  (void)dt;
 
   Scene_draw_header(game, "Select level");
   
