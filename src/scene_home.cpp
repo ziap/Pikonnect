@@ -1,5 +1,6 @@
 #include "scene.h"
 #include "config.h"
+#include "utils.h"
 #include <raylib.h>
 
 #include "controls_menu.h"
@@ -28,7 +29,7 @@ Scene Scene_home_update(Game *game, float dt) {
       case SELECTION_LEADERBOARD: {
         return SCENE_LEADERBOARD;
       } break;
-      case SELECTION_LEN: __builtin_unreachable(); break;
+      case SELECTION_LEN: unreachable(); break;
     }
   }
 
