@@ -9,7 +9,9 @@ int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
 
   Scene scene = SCENE_LOGIN;
-  Game game = Game_create();
+  Game game;
+  
+  Scene_init(scene, &game);
 
   while (!WindowShouldClose()) {
     // Reset the screen
@@ -18,7 +20,7 @@ int main() {
     ClearBackground(WHITE);
   
     // Update the game
-    scene = Scene_update_functions[scene](&game, dt);
+    scene = Scene_update(scene, &game, dt);
 
     // Display the FPS
     char buf[64];
@@ -28,7 +30,7 @@ int main() {
   }
 
   // Clean up
-  Game_deinit(&game);
+  Scene_deinit(scene, &game);
   CloseWindow();
 
   return 0;

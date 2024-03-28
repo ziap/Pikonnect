@@ -7,6 +7,10 @@
 
 const char data_path[] = "users.db";
 
+// Hash the user's password to:
+// - Obfuscate it
+// - Storing a fixed-length hash is easier
+// Copied from: https://code.google.com/archive/p/fast-hash/
 static uint64_t mix(uint64_t h) {
   h ^= h >> 23;
   h *= 0x2127599bf4325c37ULL;
@@ -14,7 +18,6 @@ static uint64_t mix(uint64_t h) {
   return h;
 }
 
-// Copied from: https://code.google.com/archive/p/fast-hash/
 static uint64_t fasthash64(const void *buf, size_t len, uint64_t seed) {
 	const uint64_t    m = 0x880355f21e6d1965ULL;
 	const uint64_t *pos = (const uint64_t *)buf;
@@ -108,7 +111,7 @@ void UserTable_save(UserTable *table) {
       }
     }
   } else {
-    fprintf(stderr, "ERROR: Failed to save data to `%s`: %s", data_path, strerror(errno));
+    fprintf(stderr, "ERROR: Failed to save data to `%s`: %s\n", data_path, strerror(errno));
   }
 
   for (uint32_t i = 0; i < table->len; ++i) {

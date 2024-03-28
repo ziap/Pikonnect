@@ -1,4 +1,4 @@
-#include "scene.h"
+#include "scene_game.h"
 #include <raylib.h>
 
 Scene Scene_game_update(Game *game, float dt) {

@@ -1,8 +1,16 @@
-#include "scene.h"
-#include "config.h"
+#include "scene_levels.h"
 #include "controls_menu.h"
 
 #include <raylib.h>
+
+void Scene_levels_load(Game *game) {
+  LevelsMenu *menu= &game->level_menu;
+  menu->current_selection = 0;
+
+  for (int i = 0; i < LEVEL_COUNT; ++i) {
+    menu->selection_lerp[i] = 0;
+  }
+}
 
 Scene Scene_levels_update(Game *game, float dt) {
   LevelsMenu *menu= &game->level_menu;

@@ -1,18 +1,27 @@
-#include "scene.h"
+#include "scene_home.h"
 #include "utils.h"
 #include <raylib.h>
 
 #include "controls_menu.h"
 
+void Scene_home_load(Game *game) {
+  HomeMenu *menu = &game->home_menu;
+
+  menu->current_selection = (HomeSelection)0;
+  for (int i = 0; i < SELECTION_LEN; ++i) {
+    menu->selection_lerp[i] = 0;
+  }
+}
+
 Scene Scene_home_update(Game *game, float dt) {
   HomeMenu *menu = &game->home_menu;
 
   if (ControlsMenu_down() || ControlsMenu_tab_next()) {
-    menu->current_selection = (Selection)((menu->current_selection + 1) % SELECTION_LEN);
+    menu->current_selection = (HomeSelection)((menu->current_selection + 1) % SELECTION_LEN);
   }
 
   if (ControlsMenu_up() || ControlsMenu_tab_prev()) {
-    menu->current_selection = (Selection)((menu->current_selection + SELECTION_LEN - 1) % SELECTION_LEN);
+    menu->current_selection = (HomeSelection)((menu->current_selection + SELECTION_LEN - 1) % SELECTION_LEN);
   }
 
   if (ControlsMenu_confirm()) {

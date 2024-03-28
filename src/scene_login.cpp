@@ -1,5 +1,4 @@
-#include "scene.h"
-#include "config.h"
+#include "scene_login.h"
 
 #include <raylib.h>
 #include <stdlib.h>
@@ -19,12 +18,12 @@ static void draw_labels(const char** labels, int x, int y) {
   }
 }
 
-static void draw_textboxes(int x, int y, int max_width, TextBoxData *textboxes) {
+static void draw_textboxes(int x, int y, int max_width, LoginTextBoxData *textboxes) {
   const char *ptr = textboxes[TEXTBOX_USERNAME].input;
   while (MeasureText(ptr, 32) > max_width) ++ptr;
   DrawText(ptr, x, y, 32, BLACK);
   char pwd[16];
-  const TextBoxData *pwd_box = textboxes + TEXTBOX_PASSWORD;
+  const LoginTextBoxData *pwd_box = textboxes + TEXTBOX_PASSWORD;
   const int pwd_len = pwd_box->len < 15 ? pwd_box->len : 15;
   memset(pwd, '*', pwd_len);
   pwd[pwd_len] = 0;
@@ -75,6 +74,27 @@ static bool is_pressing_up() {
   return false;
 }
 
+void Scene_login_load(Game *game) {
+  LoginMenu *menu = &game->login_menu;
+  menu->selected_textbox = TEXTBOX_USERNAME;
+  menu->message[0] = '\0';
+
+  const int INIT_CAP = 16;
+  for (int i = 0; i < TEXTBOX_LEN; ++i) {
+    menu->textboxes[i].input = (char*)malloc(INIT_CAP);
+    menu->textboxes[i].input[0] = '\0';
+    menu->textboxes[i].len = 0;
+    menu->textboxes[i].cap = INIT_CAP;
+  }
+}
+
+void Scene_login_unload(Game *game) {
+  LoginMenu *menu = &game->login_menu;
+  for (int i = 0; i < TEXTBOX_LEN; ++i) {
+    free(menu->textboxes[i].input);
+  }
+}
+
 Scene Scene_login_update(Game *game, float dt) {
   (void)dt;
 
@@ -100,14 +120,14 @@ Scene Scene_login_update(Game *game, float dt) {
   const int field_width = max_width + input_width;
 
   if (is_pressing_down()) {
-    menu->selected_textbox = (TextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
+    menu->selected_textbox = (LoginTextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
   }
 
   if (is_pressing_up()) {
-    menu->selected_textbox = (TextBox)((menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN);
+    menu->selected_textbox = (LoginTextBox)((menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN);
   }
 
-  TextBoxData *box = menu->textboxes + menu->selected_textbox;
+  LoginTextBoxData *box = menu->textboxes + menu->selected_textbox;
   for (int k = GetCharPressed(); k; k = GetCharPressed()) {
     if (k >= 0x20 && k < 0x7f) {
       if (box->len + 1 == box->cap) {
@@ -132,7 +152,7 @@ Scene Scene_login_update(Game *game, float dt) {
     for (int i = 0; i < TEXTBOX_LEN; ++i) {
       if (menu->textboxes[i].len == 0) {
         snprintf(menu->message, sizeof(menu->message), "Please enter your %s!", textbox_names[i]);
-        menu->selected_textbox = (TextBox)i;
+        menu->selected_textbox = (LoginTextBox)i;
         logged_in = false;
         break;
       }
