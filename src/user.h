@@ -1,5 +1,5 @@
-#ifndef DATA_H
-#define DATA_H
+#ifndef USER_H
+#define USER_H
 
 #include "config.h"
 
