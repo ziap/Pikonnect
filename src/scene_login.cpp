@@ -1,5 +1,5 @@
-#include "config.h"
 #include "scene.h"
+#include "config.h"
 
 #include <raylib.h>
 #include <stdlib.h>
@@ -96,11 +96,8 @@ Scene Scene_login_update(Game *game, float dt) {
     max_width = w > max_width ? w : max_width;
   }
 
-  char underline[16];
-  memset(underline, '*', 15);
-  underline[15] = 0;
-  const int INPUT_WIDTH = MeasureText(underline, 32);
-  const int FIELD_WIDTH = max_width + INPUT_WIDTH;
+  const int input_width = MeasureText("***************", 32);
+  const int field_width = max_width + input_width;
 
   if (is_pressing_down()) {
     menu->selected_textbox = (TextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
@@ -151,15 +148,15 @@ Scene Scene_login_update(Game *game, float dt) {
     }
   }
 
-  const int LABELS_X = (SCREEN_WIDTH - FIELD_WIDTH) / 2;
-  const int TEXTBOX_X = LABELS_X + max_width;
+  const int labels_x = (SCREEN_WIDTH - field_width) / 2;
+  const int textbox_x = labels_x + max_width;
 
   draw_title();
-  draw_labels(textbox_labels, LABELS_X, 320);
-  draw_textboxes(TEXTBOX_X, 320, INPUT_WIDTH, menu->textboxes);
-  draw_underlines(TEXTBOX_X, 320 + 32, INPUT_WIDTH, menu->selected_textbox);
+  draw_labels(textbox_labels, labels_x, 320);
+  draw_textboxes(textbox_x, 320, input_width, menu->textboxes);
+  draw_underlines(textbox_x, 320 + 32, input_width, menu->selected_textbox);
 
-  float x0 = (float)(SCREEN_WIDTH - FIELD_WIDTH) / 2;
+  float x0 = (float)(SCREEN_WIDTH - field_width) / 2;
   float x1 = x0 - 16;
   float x2 = x0 - 32;
 
@@ -169,7 +166,7 @@ Scene Scene_login_update(Game *game, float dt) {
   float y3 = y0 + 16;
   const Color selector_color = menu->message[0] ? RED : DARKBLUE;
   DrawTriangle({x2, y1}, {x2, y2}, {x1, y3}, selector_color);
-  DrawRectangle(x0 + max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), INPUT_WIDTH, 5, selector_color);
+  DrawRectangle(x0 + max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), input_width, 5, selector_color);
 
   const char login_msg[] = "Press [ENTER] to log in";
   DrawText(login_msg, (SCREEN_WIDTH - MeasureText(login_msg, 24)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 2), 24, GRAY);

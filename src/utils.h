@@ -5,9 +5,11 @@
 // Copied from the possible implementation section of:
 // https://en.cppreference.com/w/cpp/utility/unreachable
 #if defined(_MSC_VER) && !defined(__clang__) // MSVC
-  #define unreachable() (__assume(false))
+  #define unreachable (__assume(false))
 #else // GCC, Clang
-  #define unreachable() __builtin_unreachable()
+  #define unreachable __builtin_unreachable()
 #endif
+
+extern float easing_cubic(float);
 
 #endif

@@ -7,19 +7,19 @@
 Scene Scene_levels_update(Game *game, float dt) {
   LevelsMenu *menu= &game->level_menu;
 
-  const int GRID_ROWS = (LEVEL_COUNT + 2) / 3;
-  const int GRID_TOTAL = GRID_ROWS * 3;
-  const int GRID_SIDE = (SCREEN_WIDTH - 32 * 2 - 96 * 2) / 3;
-  const int TEXT_SIZE = GRID_SIDE - 128;
-  const int GRID_OFF = (SCREEN_HEIGHT - HEADER_HEIGHT - (GRID_SIDE * GRID_ROWS + 32 * (GRID_ROWS - 1))) / 2;
+  const int grid_rows = (LEVEL_COUNT + 2) / 3;
+  const int grid_total = grid_rows * 3;
+  const int grid_side = (SCREEN_WIDTH - 32 * 2 - 96 * 2) / 3;
+  const int grid_textsize = grid_side - 128;
+  const int grid_off = (SCREEN_HEIGHT - HEADER_HEIGHT - (grid_side * grid_rows + 32 * (grid_rows - 1))) / 2;
 
   int *selection = &menu->current_selection;
 
   if (ControlsMenu_up()) {
-    *selection = (*selection + GRID_TOTAL - 3) % GRID_TOTAL;
+    *selection = (*selection + grid_total - 3) % grid_total;
   }
   if (ControlsMenu_down()) {
-    *selection = (*selection + 3) % GRID_TOTAL;
+    *selection = (*selection + 3) % grid_total;
   }
   if (*selection >= LEVEL_COUNT) {
     *selection = LEVEL_COUNT - 1;
@@ -57,27 +57,27 @@ Scene Scene_levels_update(Game *game, float dt) {
   Scene_draw_header(game, "Select level");
   
   const int x0 = 96;
-  const int y0 = HEADER_HEIGHT + GRID_OFF;
+  const int y0 = HEADER_HEIGHT + grid_off;
 
   const Color grid_colors[2] = { LIGHTGRAY, GetColor(0xa3e635ff) };
   const Color text_colors[2] = { DARKGRAY, BLACK };
 
 
   float t0 = menu->selection_lerp[0];
-  DrawRectangle(x0 - 16 * t0, y0 - 16 * t0, GRID_SIDE + 32 * t0, GRID_SIDE + 32 * t0, grid_colors[1]);
-  DrawText("1", x0 + (TEXT_SIZE - MeasureText("1", TEXT_SIZE)) - 8 * t0, y0 + 64 - 8 * t0, TEXT_SIZE + 16 * t0, text_colors[1]);
+  DrawRectangle(x0 - 16 * t0, y0 - 16 * t0, grid_side + 32 * t0, grid_side + 32 * t0, grid_colors[1]);
+  DrawText("1", x0 + (grid_textsize - MeasureText("1", grid_textsize)) - 8 * t0, y0 + 64 - 8 * t0, grid_textsize + 16 * t0, text_colors[1]);
   
   for (int i = 1; i < LEVEL_COUNT; ++i) {
-    int x = x0 + (GRID_SIDE + 32) * (i % 3);
-    int y = y0 + (GRID_SIDE + 32) * (i / 3);
+    int x = x0 + (grid_side + 32) * (i % 3);
+    int y = y0 + (grid_side + 32) * (i / 3);
 
     uint32_t solve_time = game->current_user->solve_time[i - 1];
     float t = menu->selection_lerp[i];
 
-    DrawRectangle(x - 8 * t, y - 8 * t, GRID_SIDE + 16 * t, GRID_SIDE + 16 * t, grid_colors[solve_time != NOT_SOLVED]);
+    DrawRectangle(x - 8 * t, y - 8 * t, grid_side + 16 * t, grid_side + 16 * t, grid_colors[solve_time != NOT_SOLVED]);
     char c[2] = { (char)('1' + i), '\0'};
 
-    DrawText(c, x + (GRID_SIDE - MeasureText(c, TEXT_SIZE)) * 0.5f - 8 * t, y + 64 - 8 * t, TEXT_SIZE + 16 * t, text_colors[solve_time != NOT_SOLVED]);
+    DrawText(c, x + (grid_side - MeasureText(c, grid_textsize)) * 0.5f - 8 * t, y + 64 - 8 * t, grid_textsize + 16 * t, text_colors[solve_time != NOT_SOLVED]);
   }
   
   return SCENE_LEVELS;

@@ -1,5 +1,4 @@
 #include "scene.h"
-#include "config.h"
 #include "utils.h"
 #include <raylib.h>
 
@@ -29,25 +28,25 @@ Scene Scene_home_update(Game *game, float dt) {
       case SELECTION_LEADERBOARD: {
         return SCENE_LEADERBOARD;
       } break;
-      case SELECTION_LEN: unreachable(); break;
+      case SELECTION_LEN: unreachable;
     }
   }
 
-  const float ANIMATION_SPEED = 5;
+  const float anim_speed = 5;
   float *lerp = menu->selection_lerp + menu->current_selection;
-  *lerp = *lerp < 1 ? *lerp + ANIMATION_SPEED * dt : 1;
+  *lerp = *lerp < 1 ? *lerp + anim_speed * dt : 1;
   for (int i = 0; i < menu->current_selection; ++i) {
     lerp = menu->selection_lerp + i;
-    *lerp = *lerp > 0 ? *lerp - ANIMATION_SPEED * dt : 0;
+    *lerp = *lerp > 0 ? *lerp - anim_speed * dt : 0;
   }
   for (int i = menu->current_selection + 1; i < SELECTION_LEN; ++i) {
     lerp = menu->selection_lerp + i;
-    *lerp = *lerp > 0 ? *lerp - ANIMATION_SPEED * dt : 0;
+    *lerp = *lerp > 0 ? *lerp - anim_speed * dt : 0;
   }
 
   Scene_draw_header(game, "Home");
 
-  const int REMAINING_HEIGHT = SCREEN_HEIGHT - HEADER_HEIGHT;
+  const int remaining_height = SCREEN_HEIGHT - HEADER_HEIGHT;
 
   const char menu_names[3][12] = {
     "Classic", "Collapse", "Leaderboard"
@@ -61,7 +60,7 @@ Scene Scene_home_update(Game *game, float dt) {
 
   const int offset_full = (SCREEN_WIDTH - 64) / 3;
 
-  int selection_y = HEADER_HEIGHT + (REMAINING_HEIGHT - 112 * SELECTION_LEN - 32 * (SELECTION_LEN - 1)) / 2;
+  int selection_y = HEADER_HEIGHT + (remaining_height - 112 * SELECTION_LEN - 32 * (SELECTION_LEN - 1)) / 2;
   for (int i = 0; i < SELECTION_LEN; ++i) {
     const int offset = offset_full - (offset_full * 0.3f) * easing_cubic(menu->selection_lerp[i]);
     DrawRectangle(32 + offset, selection_y, (SCREEN_WIDTH - 32) - offset, 112, menu_colors[i]);

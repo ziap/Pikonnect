@@ -3,8 +3,8 @@
 #include <raylib.h>
 
 bool ControlsMenu_down() {
-  const KeyboardKey down_keys[] = { KEY_DOWN, KEY_J, KEY_S };
-  for (KeyboardKey key : down_keys) {
+  const KeyboardKey keys[] = { KEY_DOWN, KEY_J, KEY_S };
+  for (KeyboardKey key : keys) {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
   }
 
@@ -18,8 +18,8 @@ bool ControlsMenu_down() {
 }
 
 bool ControlsMenu_up() {
-  const KeyboardKey up_keys[] = { KEY_UP, KEY_K, KEY_W };
-  for (KeyboardKey key : up_keys) {
+  const KeyboardKey keys[] = { KEY_UP, KEY_K, KEY_W };
+  for (KeyboardKey key : keys) {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
   }
 

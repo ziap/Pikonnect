@@ -12,7 +12,6 @@ enum Scene {
   SCENE_LEN
 };
 
-extern float easing_cubic(float);
 extern void Scene_draw_header(Game *game, const char *menu_name);
 
 extern Scene Scene_login_update(Game *game, float dt);
