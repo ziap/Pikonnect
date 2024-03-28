@@ -2,6 +2,7 @@
 #include "scene.h"
 
 #include <raylib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -114,11 +115,7 @@ Scene Scene_login_update(Game *game, float dt) {
     if (k >= 0x20 && k < 0x7f) {
       if (box->len + 1 == box->cap) {
         box->cap *= 2;
-        char *new_input = new char[box->cap];
-        memcpy(new_input, box->input, box->len + 1);
-
-        delete[] box->input;
-        box->input = new_input;
+        box->input = (char*)realloc(box->input, box->cap);
       }
       box->input[box->len++] = k;
       box->input[box->len] = '\0';

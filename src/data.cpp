@@ -1,8 +1,9 @@
 #include "data.h"
 
-#include <cstdint>
+#include <errno.h>
 #include <string.h>
-#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
 
 const char data_path[] = "users.db";
 
@@ -47,29 +48,32 @@ static uint64_t fasthash64(const void *buf, size_t len, uint64_t seed) {
 } 
 
 void UserTable_load(UserTable *table) {
-  std::ifstream fin(data_path, std::ios::binary | std::ios::ate);
+  // std::ifstream fin(data_path, std::ios::binary | std::ios::ate);
+  FILE *f = fopen(data_path, "rb");
 
-  if (fin.is_open()) {
+  if (f) {
     table->len = 0;
 
     // https://stackoverflow.com/a/525103
     // Read entire file into a dynamically allocated array
-    int file_size = fin.tellg();
-    fin.seekg(0, std::ios::beg);
+    fseek(f, 0, SEEK_END);
+    int file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
 
-    char *bytes = new char[file_size];
-    fin.read(bytes, file_size);
+    char *bytes = (char*)malloc(file_size);
+    fread(bytes, file_size, 1, f);
+    fclose(f);
 
     // Allocate an extra user in case of new user creation
     const char *ptr = bytes;
     memcpy(&table->len, ptr, sizeof(table->len));
-    table->users = new User[table->len + 1];
+    table->users = (User*)malloc((table->len + 1) * sizeof(User));
     ptr += sizeof(table->len);
 
     for (uint32_t i = 0; i < table->len; ++i) {
       User *user = table->users + i;
       int len = strlen(ptr);
-      user->name = new char[len + 1];
+      user->name = (char*)malloc(len + 1);
       memcpy(table->users[i].name, ptr, len + 1);
       ptr += len + 1;
       memcpy(&user->password_hash, ptr, sizeof(user->password_hash));
@@ -79,36 +83,43 @@ void UserTable_load(UserTable *table) {
         ptr += sizeof(user->solve_time[j]);
       }
     }
-
-    delete[] bytes;
+    free(bytes);
   } else {
-    table->users = new User[1];
+    table->users = (User*)malloc(sizeof(User));
     table->len = 0;
   }
 }
 
 void UserTable_save(UserTable *table) {
-  std::ofstream fout(data_path, std::ios::binary | std::ios::ate);
-  fout.write((char*)&table->len, sizeof(table->len));
-  for (uint32_t i = 0; i < table->len; ++i) {
-    User *user = table->users + i;
-    char *ptr = user->name;
-    int len = strlen(ptr);
-    fout.write(ptr, len + 1);
-    uint64_t hash = user->password_hash;
-    fout.write((char*)&hash, sizeof(hash));
-    for (int j = 0; j < LEVEL_COUNT; ++j) {
-      uint32_t time = user->solve_time[j];
-      fout.write((const char*)&time, sizeof(time));
+  FILE *f = fopen(data_path, "wb");
+
+  if (f) {
+    fwrite(&table->len, sizeof(table->len), 1, f);
+    for (uint32_t i = 0; i < table->len; ++i) {
+      User *user = table->users + i;
+      char *ptr = user->name;
+      int len = strlen(ptr);
+      fwrite(ptr, len + 1, 1, f);
+      uint64_t hash = user->password_hash;
+      fwrite(&hash, sizeof(hash), 1, f);
+      for (int j = 0; j < LEVEL_COUNT; ++j) {
+        uint32_t time = user->solve_time[j];
+        fwrite(&time, sizeof(time), 1, f);
+      }
     }
-    delete[] ptr;
+  } else {
+    fprintf(stderr, "ERROR: Failed to save data to `%s`: %s", data_path, strerror(errno));
   }
 
-  delete[] table->users;
+  for (uint32_t i = 0; i < table->len; ++i) {
+    free(table->users[i].name);
+  }
+  
+  free(table->users);
 }
 
 User *UserTable_login(UserTable *table, const char *username, const char *password) {
-  uint64_t hash = fasthash64(password, strlen(password), 42);
+  const uint64_t hash = fasthash64(password, strlen(password), 42);
 
   for (uint32_t i = 0; i < table->len; ++i) {
     User *user = table->users + i;
@@ -119,7 +130,7 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
 
   User *user = table->users + table->len++;
   int len = strlen(username);
-  user->name = new char[len + 1];
+  user->name = (char*)malloc(len + 1);
   memcpy(user->name, username, len + 1);
   user->password_hash = hash;
 
