@@ -3,13 +3,20 @@
 
 #include "config.h"
 
-struct User {
-  char* name;
+struct UserInfo {
   uint64_t password_hash;
   uint32_t solve_time[LEVEL_COUNT];
 };
 
+struct User {
+  char* name;
+  UserInfo info;
+};
+
 struct UserTable {
+  char *names;
+  uint32_t names_len;
+  char *new_name;
   User *users;
   uint32_t len;
 };
