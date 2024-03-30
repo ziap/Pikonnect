@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "user.h"
+#include "board_array.h"
 
 struct LoginTextBoxData {
   char *input;
@@ -41,12 +42,6 @@ struct LevelsMenu {
 struct GameConfig {
   GameMode gamemode;
   int level;
-};
-
-struct GameBoard {
-  int **data;
-  int height;
-  int width;
 };
 
 struct GameMenu {

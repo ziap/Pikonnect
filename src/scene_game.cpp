@@ -2,7 +2,6 @@
 #include "utils.h"
 #include <raylib.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 struct LevelConfig {
   int height;
@@ -11,11 +10,11 @@ struct LevelConfig {
 };
 
 static LevelConfig configs[LEVEL_COUNT] = {
-  { 6,  6,  6 },
-  { 6,  8,  9 },
-  { 7,  10, 13 },
-  { 8,  11, 16 },
-  { 9,  12, 20 },
+  {  6,  6,  6 },
+  {  6,  8,  9 },
+  {  7, 10, 13 },
+  {  8, 11, 16 },
+  {  9, 12, 20 },
   { 10, 14, 26 },
 };
 
@@ -27,73 +26,67 @@ void Scene_game_load(Game *game) {
   int gamemode = game->config.gamemode;
 
   LevelConfig config = configs[level];
-  menu->board.width = config.width;
-  menu->board.height = config.height;
-  menu->board.data = (int **)malloc((config.height + 4) * sizeof(int*));
-
-  for (int i = 0; i < config.height + 4; ++i) {
-    menu->board.data[i] = (int*)malloc((config.width + 4) * sizeof(int));
-  }
-
-  for (int i = 0; i < config.height + 4; ++i) {
-    menu->board.data[i][0] = -1;
-    menu->board.data[i][config.width + 3] = -1;
-  }
-
-  for (int i = 1; i < config.width + 3; ++i) {
-    menu->board.data[0][i] = -1;
-    menu->board.data[config.height + 3][i] = -1;
-  }
-
-  for (int i = 1; i < config.height + 3; ++i) {
-    menu->board.data[i][1] = 0;
-    menu->board.data[i][config.width + 2] = 0;
-  }
-
-  for (int i = 2; i < config.width + 2; ++i) {
-    menu->board.data[1][i] = 0;
-    menu->board.data[config.height + 2][i] = 0;
-  }
+  GameBoard_init(&menu->board, config.width, config.height);
 
   int idx = 0;
   for (int i = 0; i < config.height; ++i) {
     for (int j = 0; j < config.width; ++j) {
-      menu->board.data[i + 2][j + 2] = (idx++ / 2) % config.num_classes + 1;
+      *GameBoard_index(&menu->board, {i, j}) = (idx++ / 2) % config.num_classes + 1;
     }
   }
 
-  menu->random_state = game->current_user->info.random_state[level][gamemode];
+  uint64_t random_state = game->current_user->info.random_state[level][gamemode];
 
   int total = config.height * config.width;
   for (int i = 0; i < total - 1; ++i) {
-    uint32_t j = pcg32_bounded(&menu->random_state, total - i) + i;
+    int j = pcg32_bounded(&random_state, total - i) + i;
+    int *p1 = GameBoard_index(&menu->board, {i / config.width, i % config.width});
+    int *p2 = GameBoard_index(&menu->board, {j / config.width, j % config.width});
 
-    int x1 = i % config.width;
-    int y1 = i / config.width;
-
-    int x2 = j % config.width;
-    int y2 = j / config.width;
-
-    int t = menu->board.data[y1 + 2][x1 + 2];
-    menu->board.data[y1 + 2][x1 + 2] = menu->board.data[y2 + 2][x2 + 2];
-    menu->board.data[y2 + 2][x2 + 2] = t;
+    int t = *p1;
+    *p1 = *p2;
+    *p2 = t;
   }
 
-  for (int i = 0; i < menu->board.height + 4; ++i) {
-    for (int j = 0; j < menu->board.width + 4; ++j) {
-      printf("%d ", menu->board.data[i][j]);
-    }
-    printf("\n");
-  }
+  menu->random_state = random_state;
 }
 
 Scene Scene_game_update(Game *game, float dt) {
   (void)dt;
   GameMenu *menu = &game->menu.game;
-  uint32_t time_ms = GetTime() * 1e6 - menu->start_time;
-  uint32_t time_s = time_ms / 1000000;
-  int s = time_s % 60;
-  int m = time_s / 60;
+  const uint32_t time_ms = GetTime() * 1e6 - menu->start_time;
+  const uint32_t time_s = time_ms / 1000000;
+  const int s = time_s % 60;
+  const int m = time_s / 60;
+
+  const int gap_x = 8 * (menu->board.width - 1);
+  const int gap_y = 8 * (menu->board.height - 1);
+
+  const int side_x = (SCREEN_WIDTH - 64 - gap_x) / menu->board.width;
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - 64 - gap_y) / menu->board.height;
+
+  const int GRID_SIDE = side_x < side_y ? side_x : side_y;
+  const int GRID_TEXT = GRID_SIDE * 6 / 10;
+  const int GRID_PAD  = GRID_SIDE * 2 / 10;
+
+  const int x0 = (SCREEN_WIDTH - GRID_SIDE * menu->board.width - gap_x) / 2;
+
+  int y = HEADER_HEIGHT + (SCREEN_HEIGHT - HEADER_HEIGHT - GRID_SIDE * menu->board.height - gap_y) / 2;
+  for (int i = 0; i < menu->board.height; ++i) {
+    int x = x0;
+    for (int j = 0; j < menu->board.width; ++j) {
+      DrawRectangle(x, y, GRID_SIDE, GRID_SIDE, LIGHTGRAY);
+      int val = *GameBoard_index(&menu->board, {i, j});
+      if (val) {
+        char c[2] = { (char)('A' + val - 1) , '\0' };
+        DrawText(c, x + (GRID_SIDE - MeasureText(c, GRID_TEXT)) / 2, y + GRID_PAD, GRID_TEXT, BLACK);
+      }
+
+      x += GRID_SIDE + 8;
+    }
+
+    y += GRID_SIDE + 8;
+  }
 
   DrawRectangle(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, LIGHTGRAY);
   char msg[1024];
@@ -109,10 +102,7 @@ Scene Scene_game_update(Game *game, float dt) {
 void Scene_game_unload(Game *game) {
   GameMenu *menu = &game->menu.game;
 
-  for (int i = 0; i < menu->board.height + 4; ++i) {
-    free(menu->board.data[i]);
-  }
-  free(menu->board.data);
+  GameBoard_deinit(&menu->board);
   (void)game;
 }
 
