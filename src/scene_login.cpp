@@ -5,10 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 
+const Color accent_color = 
+  { 0, 135, 204, 255 };
+
+
 static void draw_title() {
   const int TITLE_SIZE = 72;
   const char title[] = "Pikachu Game";
-  DrawText(title, (SCREEN_WIDTH - MeasureText(title, TITLE_SIZE)) / 2, 150, TITLE_SIZE, DARKBLUE);
+  DrawText(title, (SCREEN_WIDTH - MeasureText(title, TITLE_SIZE)) / 2, 150, TITLE_SIZE, accent_color);
 }
 
 static void draw_labels(const char** labels, int x, int y) {
@@ -184,7 +188,7 @@ Scene Scene_login_update(Game *game, float dt) {
   float y1 = y0 + 8;
   float y2 = y0 + 24;
   float y3 = y0 + 16;
-  const Color selector_color = menu->message[0] ? RED : DARKBLUE;
+  const Color selector_color = menu->message[0] ? RED : accent_color;
   DrawTriangle({x2, y1}, {x2, y2}, {x1, y3}, selector_color);
   DrawRectangle(x0 + max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), input_width, 5, selector_color);
 

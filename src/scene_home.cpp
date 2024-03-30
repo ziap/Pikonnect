@@ -62,9 +62,9 @@ Scene Scene_home_update(Game *game, float dt) {
   };
 
   const Color menu_colors[3] = {
-    GetColor(0x38bdf8ff),
-    GetColor(0xa3e635ff),
-    GetColor(0xfacc15ff),
+    { 117, 222, 254, 255 },
+    { 142, 137, 198, 255 },
+    { 245, 123,  87, 255 },
   };
 
   const int offset_full = (SCREEN_WIDTH - 64) / 3;

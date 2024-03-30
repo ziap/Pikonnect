@@ -67,9 +67,8 @@ Scene Scene_levels_update(Game *game, float dt) {
   const int x0 = 96;
   const int y0 = HEADER_HEIGHT + grid_off;
 
-  const Color grid_colors[2] = { LIGHTGRAY, GetColor(0xa3e635ff) };
+  const Color grid_colors[2] = { LIGHTGRAY, { 0, 255, 157, 255 } };
   const Color text_colors[2] = { DARKGRAY, BLACK };
-
 
   float t0 = menu->selection_lerp[0];
   DrawRectangle(x0 - 16 * t0, y0 - 16 * t0, grid_side + 32 * t0, grid_side + 32 * t0, grid_colors[1]);
