@@ -75,7 +75,7 @@ static bool is_pressing_up() {
 }
 
 void Scene_login_load(Game *game) {
-  LoginMenu *menu = &game->login_menu;
+  LoginMenu *menu = &game->menu.login;
   menu->selected_textbox = TEXTBOX_USERNAME;
   menu->message[0] = '\0';
 
@@ -89,7 +89,7 @@ void Scene_login_load(Game *game) {
 }
 
 void Scene_login_unload(Game *game) {
-  LoginMenu *menu = &game->login_menu;
+  LoginMenu *menu = &game->menu.login;
   for (int i = 0; i < TEXTBOX_LEN; ++i) {
     free(menu->textboxes[i].input);
   }
@@ -98,7 +98,7 @@ void Scene_login_unload(Game *game) {
 Scene Scene_login_update(Game *game, float dt) {
   (void)dt;
 
-  LoginMenu *menu = &game->login_menu;
+  LoginMenu *menu = &game->menu.login;
 
   const char *textbox_names[TEXTBOX_LEN] = {
     "username",

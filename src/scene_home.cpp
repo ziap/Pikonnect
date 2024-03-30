@@ -5,7 +5,7 @@
 #include "controls_menu.h"
 
 void Scene_home_load(Game *game) {
-  HomeMenu *menu = &game->home_menu;
+  HomeMenu *menu = &game->menu.home;
 
   menu->current_selection = (HomeSelection)0;
   for (int i = 0; i < SELECTION_LEN; ++i) {
@@ -14,7 +14,7 @@ void Scene_home_load(Game *game) {
 }
 
 Scene Scene_home_update(Game *game, float dt) {
-  HomeMenu *menu = &game->home_menu;
+  HomeMenu *menu = &game->menu.home;
 
   if (ControlsMenu_down() || ControlsMenu_tab_next()) {
     menu->current_selection = (HomeSelection)((menu->current_selection + 1) % SELECTION_LEN);
@@ -27,11 +27,11 @@ Scene Scene_home_update(Game *game, float dt) {
   if (ControlsMenu_confirm()) {
     switch (menu->current_selection) {
       case SELECTION_CLASSIC: {
-        game->gamemode = GAMEMODE_CLASSIC;
+        game->config.gamemode = GAMEMODE_CLASSIC;
         return SCENE_LEVELS;
       } break;
       case SELECTION_COLLAPSE: {
-        game->gamemode = GAMEMODE_COLLAPSE;
+        game->config.gamemode = GAMEMODE_COLLAPSE;
         return SCENE_LEVELS;
       } break;
       case SELECTION_LEADERBOARD: {

@@ -4,7 +4,7 @@
 #include <raylib.h>
 
 void Scene_levels_load(Game *game) {
-  LevelsMenu *menu= &game->level_menu;
+  LevelsMenu *menu= &game->menu.level;
   menu->current_selection = 0;
 
   for (int i = 0; i < LEVEL_COUNT; ++i) {
@@ -13,7 +13,7 @@ void Scene_levels_load(Game *game) {
 }
 
 Scene Scene_levels_update(Game *game, float dt) {
-  LevelsMenu *menu= &game->level_menu;
+  LevelsMenu *menu= &game->menu.level;
 
   const int grid_rows = (LEVEL_COUNT + 2) / 3;
   const int grid_total = grid_rows * 3;
@@ -44,7 +44,7 @@ Scene Scene_levels_update(Game *game, float dt) {
     menu->selection_lerp[*selection] = 0;
 
     if (*selection == 0 || game->current_user->info.solve_time[*selection - 1] != NOT_SOLVED) {
-      game->level = *selection;
+      game->config.level = *selection;
       return SCENE_GAME;
     }
   }

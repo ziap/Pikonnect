@@ -17,7 +17,7 @@ enum LoginTextBox {
 
 struct LoginMenu {
   LoginTextBox selected_textbox;
-  char message[256];
+  char message[64];
   LoginTextBoxData textboxes[TEXTBOX_LEN];
 };
 
@@ -38,20 +38,34 @@ struct LevelsMenu {
   float selection_lerp[LEVEL_COUNT];
 };
 
-enum GameMode {
-  GAMEMODE_CLASSIC,
-  GAMEMODE_COLLAPSE,
+struct GameConfig {
+  GameMode gamemode;
+  int level;
+};
+
+struct GameBoard {
+  int **data;
+  int height;
+  int width;
+};
+
+struct GameMenu {
+  uint32_t start_time;
+  uint64_t random_state;
+  GameBoard board;
 };
 
 struct Game {
   UserTable users;
-  LoginMenu login_menu;
-  HomeMenu home_menu;
-  LevelsMenu level_menu;
   User *current_user;
+  GameConfig config;
 
-  GameMode gamemode;
-  int level;
+  union {
+    LoginMenu login;
+    HomeMenu home;
+    LevelsMenu level;
+    GameMenu game;
+  } menu;
 };
 
 extern void Game_init(Game *game);

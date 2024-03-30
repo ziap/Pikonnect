@@ -31,7 +31,7 @@ static void (*const Scene_load_functions[SCENE_LEN])(Game *game) = {
   Scene_login_load,
   Scene_home_load,
   Scene_levels_load,
-  Scene_load_noop,
+  Scene_game_load,
   Scene_load_noop,
 };
 
@@ -47,7 +47,7 @@ static void (*const Scene_unload_functions[SCENE_LEN])(Game *game) = {
   Scene_login_unload,
   Scene_unload_noop,
   Scene_unload_noop,
-  Scene_unload_noop,
+  Scene_game_unload,
   Scene_unload_noop,
 };
 
@@ -57,7 +57,7 @@ void Scene_init(Scene scene, Game *game) {
 }
 
 void Scene_deinit(Scene scene, Game *game) {
-  Scene_load_functions[scene](game);
+  Scene_unload_functions[scene](game);
   Game_deinit(game);
 }
 
