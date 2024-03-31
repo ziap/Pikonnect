@@ -15,7 +15,7 @@ const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
 const int HEADER_HEIGHT = 96;
 
-const uint64_t PASSWORD_SEED = 0x9e3779b97f4a7c55;
+const uint64_t MAGIC = 0x9e3779b97f4a7c55;
 
 const uint32_t NOT_SOLVED = -1;
 

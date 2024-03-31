@@ -43,7 +43,7 @@ Scene Scene_levels_update(Game *game, float dt) {
   if (ControlsMenu_confirm()) {
     menu->selection_lerp[*selection] = 0;
 
-    if (*selection == 0 || game->current_user->info.solve_time[*selection - 1] != NOT_SOLVED) {
+    if (*selection == 0 || game->current_user->info.solve_time[*selection - 1][game->config.gamemode] != NOT_SOLVED) {
       game->config.level = *selection;
       return SCENE_GAME;
     }
@@ -78,7 +78,7 @@ Scene Scene_levels_update(Game *game, float dt) {
     int x = x0 + (grid_side + 32) * (i % 3);
     int y = y0 + (grid_side + 32) * (i / 3);
 
-    uint32_t solve_time = game->current_user->info.solve_time[i - 1];
+    uint32_t solve_time = game->current_user->info.solve_time[i - 1][game->config.gamemode];
     float t = menu->selection_lerp[i];
 
     DrawRectangle(x - 8 * t, y - 8 * t, grid_side + 16 * t, grid_side + 16 * t, grid_colors[solve_time != NOT_SOLVED]);

@@ -9,13 +9,13 @@ float easing_cubic(float t) {
 // Copied from: https://code.google.com/archive/p/fast-hash/
 static uint64_t mix(uint64_t h) {
   h ^= h >> 23;
-  h *= 0x2127599bf4325c37ULL;
+  h *= 0x2127599bf4325c37;
   h ^= h >> 47;
   return h;
 }
 
 uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed) {
-	const uint64_t    m = 0x880355f21e6d1965ULL;
+	const uint64_t    m = 0x880355f21e6d1965;
 	const uint64_t *pos = (const uint64_t *)buf;
 	const uint64_t *end = pos + (len / 8);
 	const uint8_t *pos2;
@@ -48,7 +48,7 @@ uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed) {
 
 uint32_t pcg32(uint64_t *state) {
   uint64_t s = *state;
-  *state = s * 0x5851f42d4c957f2d + 1;
+  *state = s * 0x5851f42d4c957f2d + 0x14057b7ef767814f;
 
   uint32_t xorshifted = ((s >> 18u) ^ s) >> 27u;
   uint32_t rot = s >> 59u;

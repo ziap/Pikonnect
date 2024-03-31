@@ -5,7 +5,7 @@
 
 struct UserInfo {
   uint64_t password_hash;
-  uint32_t solve_time[LEVEL_COUNT];
+  uint32_t solve_time[LEVEL_COUNT][GAMEMODE_LEN];
   uint64_t random_state[LEVEL_COUNT][GAMEMODE_LEN];
 };
 
