@@ -19,4 +19,7 @@ const uint64_t MAGIC = 0x9e3779b97f4a7c55;
 
 const uint32_t NOT_SOLVED = -1;
 
+const float DAS = 0.17;
+const float ARR = 0.07;
+
 #endif

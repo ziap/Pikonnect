@@ -29,6 +29,21 @@ enum HomeSelection {
   SELECTION_LEN
 };
 
+enum Dir {
+  DIR_UP,
+  DIR_LEFT,
+  DIR_DOWN,
+  DIR_RIGHT,
+  DIR_LEN
+};
+
+static const Index next_index[DIR_LEN] = {
+  {-1, 0},
+  {0, -1},
+  {1, 0},
+  {0, 1}
+};
+
 struct HomeMenu {
   HomeSelection current_selection;
   float selection_lerp[SELECTION_LEN];
@@ -46,8 +61,13 @@ struct GameConfig {
 
 struct GameMenu {
   uint32_t start_time;
-  uint64_t random_state;
   GameBoard board;
+
+  Index position;
+
+  float as_delay[DIR_LEN];
+  bool moving[DIR_LEN];
+  bool dispatched[DIR_LEN];
 };
 
 struct Game {

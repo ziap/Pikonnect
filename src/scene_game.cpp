@@ -52,12 +52,42 @@ static const Color palette[26] = {
   { 179, 252, 202, 255 },
 };
 
+static const Color palette_dark[26] = {
+  {45, 71, 61, 255},
+  {41, 70, 65, 255},
+  {37, 69, 69, 255},
+  {34, 66, 70, 255},
+  {32, 62, 71, 255},
+  {32, 57, 70, 255},
+  {32, 53, 68, 255},
+  {34, 47, 65, 255},
+  {36, 43, 60, 255},
+  {39, 38, 55, 255},
+  {44, 34, 50, 255},
+  {48, 31, 44, 255},
+  {53, 30, 38, 255},
+  {57, 29, 33, 255},
+  {62, 30, 29, 255},
+  {66, 31, 26, 255},
+  {68, 34, 24, 255},
+  {70, 38, 23, 255},
+  {71, 43, 24, 255},
+  {71, 47, 26, 255},
+  {69, 53, 30, 255},
+  {67, 57, 34, 255},
+  {63, 62, 39, 255},
+  {59, 66, 45, 255},
+  {55, 69, 51, 255},
+  {50, 70, 56, 255},
+};
+
 void Scene_game_load(Game *game) {
   GameMenu *menu = &game->menu.game;
   menu->start_time = GetTime() * 1e6;
+  menu->position.x = 0;
+  menu->position.y = 0;
 
   int level = game->config.level;
-  int gamemode = game->config.gamemode;
 
   LevelConfig config = configs[level];
   GameBoard_init(&menu->board, config.width, config.height);
@@ -69,11 +99,11 @@ void Scene_game_load(Game *game) {
     }
   }
 
-  uint64_t random_state = game->current_user->info.random_state[level][gamemode];
+  uint64_t *random_state = &game->current_user->info.random_state;
 
   int total = config.height * config.width;
   for (int i = 0; i < total - 1; ++i) {
-    int j = pcg32_bounded(&random_state, total - i) + i;
+    int j = pcg32_bounded(random_state, total - i) + i;
     int *p1 = GameBoard_index(&menu->board, {i / config.width, i % config.width});
     int *p2 = GameBoard_index(&menu->board, {j / config.width, j % config.width});
 
@@ -81,9 +111,9 @@ void Scene_game_load(Game *game) {
     *p1 = *p2;
     *p2 = t;
   }
-
-  menu->random_state = random_state;
 }
+
+static const Dir opposite[DIR_LEN] = {DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT};
 
 Scene Scene_game_update(Game *game, float dt) {
   (void)dt;
@@ -93,27 +123,97 @@ Scene Scene_game_update(Game *game, float dt) {
   const int s = time_s % 60;
   const int m = time_s / 60;
 
-  const int gap_x = 8 * (menu->board.width - 1);
-  const int gap_y = 8 * (menu->board.height - 1);
+  const KeyboardKey keys[DIR_LEN][3] = {
+    {KEY_UP, KEY_K, KEY_W},
+    {KEY_LEFT, KEY_H, KEY_A},
+    {KEY_DOWN, KEY_J, KEY_S},
+    {KEY_RIGHT, KEY_L, KEY_D},
+  };
 
-  const int side_x = (SCREEN_WIDTH - 64 - gap_x) / menu->board.width;
-  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - 64 - gap_y) / menu->board.height;
+  bool dispatching[DIR_LEN] = {0};
+  bool pressing[DIR_LEN] = {0};
+
+  for (int dir = 0; dir < DIR_LEN; ++dir) {
+    for (int i = 0; i < 3; ++i) {
+      if (IsKeyDown(keys[dir][i])) pressing[dir] = true;
+    }
+  }
+
+  for (int dir = 0; dir < DIR_LEN; ++dir) {
+    if (pressing[dir]) {
+      if (!menu->dispatched[dir]) {
+        dispatching[dir] = true;
+        menu->dispatched[dir] = true;
+      }
+
+    } else {
+      menu->dispatched[dir] = false;
+    }
+  }
+
+  Index next_position = menu->position;
+
+  for (int dir = 0; dir < DIR_LEN; ++dir) {
+    if (dispatching[dir]) {
+      menu->as_delay[dir] = DAS;
+      menu->moving[dir] = true;
+      menu->moving[opposite[dir]] = false;
+
+      next_position.x += next_index[dir].x;
+      next_position.y += next_index[dir].y;
+    } else if (pressing[dir]) {
+      if (!pressing[opposite[dir]]) {
+        menu->moving[dir] = true;
+        menu->moving[opposite[dir]] = false;
+      }
+
+      if (menu->moving[dir]) {
+        menu->as_delay[dir] -= dt;
+        if (menu->as_delay[dir] <= 0) {
+          menu->as_delay[dir] = ARR;
+          next_position.x += next_index[dir].x;
+          next_position.y += next_index[dir].y;
+        }
+      }
+    }
+  }
+
+  const int w = menu->board.width;
+  const int h = menu->board.height;
+
+  if (next_position.x != menu->position.x || next_position.y != menu->position.y) {
+    menu->position = next_position;
+    if (menu->position.x < 0) menu->position.x = 0;
+    if (menu->position.y < 0) menu->position.y = 0;
+
+    if (menu->position.x >= w) menu->position.x = w - 1;
+    if (menu->position.y >= h) menu->position.y = h - 1;
+  }
+
+  const int gap_x = 8 * (w - 1);
+  const int gap_y = 8 * (h - 1);
+
+  const int side_x = (SCREEN_WIDTH - 64 - gap_x) / w;
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - 64 - gap_y) / h;
 
   const int GRID_SIDE = side_x < side_y ? side_x : side_y;
   const int GRID_TEXT = GRID_SIDE * 6 / 10;
   const int GRID_PAD  = GRID_SIDE * 2 / 10;
 
-  const int x0 = (SCREEN_WIDTH - GRID_SIDE * menu->board.width - gap_x) / 2;
+  const int x0 = (SCREEN_WIDTH - GRID_SIDE * w - gap_x) / 2;
+  const int y0 = HEADER_HEIGHT + (SCREEN_HEIGHT - HEADER_HEIGHT - GRID_SIDE * h - gap_y) / 2;
 
-  int y = HEADER_HEIGHT + (SCREEN_HEIGHT - HEADER_HEIGHT - GRID_SIDE * menu->board.height - gap_y) / 2;
-  for (int i = 0; i < menu->board.height; ++i) {
+  DrawRectangle(x0 + (GRID_SIDE + 8) * menu->position.x - 5, y0 + (GRID_SIDE + 8) * menu->position.y - 5, GRID_SIDE + 10, GRID_SIDE + 10, GRAY);
+
+  int y = y0;
+  for (int i = 0; i < h; ++i) {
     int x = x0;
-    for (int j = 0; j < menu->board.width; ++j) {
+    for (int j = 0; j < w; ++j) {
       int val = *GameBoard_index(&menu->board, {i, j});
       if (val) {
         DrawRectangle(x, y, GRID_SIDE, GRID_SIDE, palette[val - 1]);
         char c[2] = { (char)('A' + val - 1) , '\0' };
-        DrawText(c, x + (GRID_SIDE - MeasureText(c, GRID_TEXT)) / 2, y + GRID_PAD, GRID_TEXT, BLACK);
+        DrawText(c, x + (GRID_SIDE - MeasureText(c, GRID_TEXT)) / 2, y + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
       }
 
       x += GRID_SIDE + 8;
