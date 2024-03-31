@@ -2,7 +2,7 @@
 #define BOARD_ARRAY_H
 
 struct GameBoard {
-  int **data;
+  int *data;
   int width;
   int height;
 };
