@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "search.h"
 #include "user.h"
 #include "board_array.h"
 
@@ -27,21 +28,6 @@ enum HomeSelection {
   SELECTION_COLLAPSE,
   SELECTION_LEADERBOARD,
   SELECTION_LEN
-};
-
-enum Dir {
-  DIR_UP,
-  DIR_LEFT,
-  DIR_DOWN,
-  DIR_RIGHT,
-  DIR_LEN
-};
-
-static const Index next_index[DIR_LEN] = {
-  {-1, 0},
-  {0, -1},
-  {1, 0},
-  {0, 1}
 };
 
 struct HomeMenu {
@@ -72,6 +58,10 @@ struct GameMenu {
 
   Index selection;
   bool selecting;
+
+  Path path;
+  int path_val;
+  float path_lerp;
 };
 
 struct Game {
@@ -89,7 +79,5 @@ struct Game {
 
 extern void Game_init(Game *game);
 extern void Game_deinit(Game *game);
-
-extern Index Index_step(Index index_current, Dir dir_next);
 
 #endif

@@ -90,6 +90,8 @@ void Scene_game_load(Game *game) {
   menu->position.x = 0;
   menu->position.y = 0;
   menu->selecting = false;
+  menu->path_lerp = 0;
+  menu->path.len = 0;
 
   int level = game->config.level;
 
@@ -186,25 +188,34 @@ Scene Scene_game_update(Game *game, float dt) {
         menu->selecting = true;
         menu->selection = menu->position;
       } else {
-        menu->selecting = false;
         Path path = Search_valid_path(menu->board, menu->position, menu->selection);
 
         if (path.len > 0) {
+          menu->selecting = false;
+          menu->path = path;
+          menu->path_val = *GameBoard_index(menu->board, menu->position);
+          menu->path_lerp = 0;
+
           *GameBoard_index(menu->board, menu->position) = 0;
           *GameBoard_index(menu->board, menu->selection) = 0;
+        } else {
+          menu->selection = menu->position;
         }
       }
     }
   }
 
-  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-    if (IsKeyPressed(KEY_H)) {
-      menu->start_time -= 60e6;
-      Path path = Search_suggest_move(menu->board);
-      if (path.len >= 2) {
-        *GameBoard_index(menu->board, path.data[0]) = 0;
-        *GameBoard_index(menu->board, path.data[path.len - 1]) = 0;
-      }
+  if (IsKeyPressed(KEY_X)) {
+    menu->start_time -= 60e6;
+    Path path = Search_suggest_move(menu->board);
+    if (path.len >= 2) {
+      menu->selecting = false;
+      menu->path = path;
+      menu->path_val = *GameBoard_index(menu->board, path.data[0]);
+      menu->path_lerp = 0;
+
+      *GameBoard_index(menu->board, path.data[0]) = 0;
+      *GameBoard_index(menu->board, path.data[path.len - 1]) = 0;
     }
   }
 
@@ -216,12 +227,19 @@ Scene Scene_game_update(Game *game, float dt) {
       float *lerp = menu->board_lerp + (i * w + j);
 
       if (menu->selecting && i == menu->selection.y && j == menu->selection.x) {
-        if (*lerp < 1) *lerp += 5 * dt;
+        *lerp += 5 * dt;
+        if (*lerp > 1) *lerp = 1;
       } else {
-        if (*lerp > 0) *lerp -= 5 * dt;
+        *lerp -= 5 * dt;
+        if (*lerp < 0) *lerp = 0;
       }
     }
 
+  }
+
+  menu->path_lerp += 3 * dt;
+  if (menu->path_lerp > 1) {
+    menu->path.len = 0;
   }
 
   menu->position = next_position;
@@ -234,8 +252,8 @@ Scene Scene_game_update(Game *game, float dt) {
   const int gap_x = 8 * (w - 1);
   const int gap_y = 8 * (h - 1);
 
-  const int side_x = (SCREEN_WIDTH - 64 - gap_x) / w;
-  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - 64 - gap_y) / h;
+  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
 
   const int GRID_SIDE = side_x < side_y ? side_x : side_y;
 
@@ -270,6 +288,37 @@ Scene Scene_game_update(Game *game, float dt) {
     }
 
     y += GRID_SIDE + 8;
+  }
+
+  float x = 2 * menu->path_lerp - 1;
+  x *= x;
+
+  Color path_color = palette[menu->path_val - 1];
+  path_color.g += (255 - path_color.g) * x;
+  path_color.r += (255 - path_color.r) * x;
+  path_color.b += (255 - path_color.b) * x;
+
+  for (int i = 0; i < menu->path.len; ++i) {
+    Index idx = menu->path.data[i];
+    DrawCircle(x0 + (GRID_SIDE + 8) * idx.x + GRID_SIDE / 2,
+               y0 + (GRID_SIDE + 8) * idx.y + GRID_SIDE / 2,
+               GRID_SIDE * 0.25f, path_color);
+  }
+
+  for (int i = 1; i < menu->path.len; ++i) {
+    Index c0 = menu->path.data[i - 1];
+    Index c1 = menu->path.data[i];
+
+    Vector2 p0 = {
+      x0 + (GRID_SIDE + 8) * c0.x + GRID_SIDE * 0.5f,
+      y0 + (GRID_SIDE + 8) * c0.y + GRID_SIDE * 0.5f,
+    };
+
+    Vector2 p1 = {
+      x0 + (GRID_SIDE + 8) * c1.x + GRID_SIDE * 0.5f,
+      y0 + (GRID_SIDE + 8) * c1.y + GRID_SIDE * 0.5f,
+    };
+    DrawLineEx(p0, p1, GRID_SIDE * 0.2, path_color);
   }
 
   DrawRectangle(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, LIGHTGRAY);

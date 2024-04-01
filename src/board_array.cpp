@@ -34,3 +34,8 @@ void GameBoard_init(GameBoard *board, int width, int height) {
 void GameBoard_deinit(GameBoard *board) {
   free(board->data);
 }
+
+Index Index_step(Index current, Dir dir) {
+  Index next = next_index[dir];
+  return {current.y + next.y, current.x + next.x};
+}

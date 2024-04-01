@@ -1,7 +1,6 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include "game.h"
 #include "board_array.h"
 
 struct Path {
