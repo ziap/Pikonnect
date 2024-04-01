@@ -62,12 +62,16 @@ struct GameConfig {
 struct GameMenu {
   uint32_t start_time;
   GameBoard board;
+  float *board_lerp;
 
   Index position;
 
   float as_delay[DIR_LEN];
-  bool moving[DIR_LEN];
+  Dir move_direction;
   bool dispatched[DIR_LEN];
+
+  Index selection;
+  bool selecting;
 };
 
 struct Game {
@@ -85,5 +89,7 @@ struct Game {
 
 extern void Game_init(Game *game);
 extern void Game_deinit(Game *game);
+
+extern Index Index_step(Index index_current, Dir dir_next);
 
 #endif

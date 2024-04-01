@@ -13,6 +13,7 @@
 #endif
 
 extern float easing_cubic(float);
+
 extern uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed);
 extern uint32_t pcg32(uint64_t *state);
 extern uint32_t pcg32_bounded(uint64_t *state, uint32_t range);

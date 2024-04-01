@@ -2,6 +2,9 @@
 #include "utils.h"
 #include <raylib.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "search.h"
 
 struct LevelConfig {
   int height;
@@ -86,16 +89,19 @@ void Scene_game_load(Game *game) {
   menu->start_time = GetTime() * 1e6;
   menu->position.x = 0;
   menu->position.y = 0;
+  menu->selecting = false;
 
   int level = game->config.level;
 
   LevelConfig config = configs[level];
   GameBoard_init(&menu->board, config.width, config.height);
 
+  menu->board_lerp = (float*)calloc(config.height * config.width, sizeof(float));
+
   int idx = 0;
   for (int i = 0; i < config.height; ++i) {
     for (int j = 0; j < config.width; ++j) {
-      *GameBoard_index(&menu->board, {i, j}) = (idx++ / 2) % config.num_classes + 1;
+      *GameBoard_index(menu->board, {i, j}) = (idx++ / 2) % config.num_classes + 1;
     }
   }
 
@@ -104,8 +110,8 @@ void Scene_game_load(Game *game) {
   int total = config.height * config.width;
   for (int i = 0; i < total - 1; ++i) {
     int j = pcg32_bounded(random_state, total - i) + i;
-    int *p1 = GameBoard_index(&menu->board, {i / config.width, i % config.width});
-    int *p2 = GameBoard_index(&menu->board, {j / config.width, j % config.width});
+    int *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
+    int *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
 
     int t = *p1;
     *p1 = *p2;
@@ -156,24 +162,48 @@ Scene Scene_game_update(Game *game, float dt) {
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (dispatching[dir]) {
       menu->as_delay[dir] = DAS;
-      menu->moving[dir] = true;
-      menu->moving[opposite[dir]] = false;
+      menu->move_direction = (Dir)dir;
 
-      next_position.x += next_index[dir].x;
-      next_position.y += next_index[dir].y;
+      next_position = Index_step(next_position, (Dir)dir);
     } else if (pressing[dir]) {
       if (!pressing[opposite[dir]]) {
-        menu->moving[dir] = true;
-        menu->moving[opposite[dir]] = false;
+        menu->move_direction = (Dir)dir;
       }
 
-      if (menu->moving[dir]) {
+      if (menu->move_direction == dir) {
         menu->as_delay[dir] -= dt;
         if (menu->as_delay[dir] <= 0) {
           menu->as_delay[dir] = ARR;
-          next_position.x += next_index[dir].x;
-          next_position.y += next_index[dir].y;
+          next_position = Index_step(next_position, (Dir)dir);
         }
+      }
+    }
+  }
+
+  if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+    if (*GameBoard_index(menu->board, menu->position)) {
+      if (!menu->selecting) {
+        menu->selecting = true;
+        menu->selection = menu->position;
+      } else {
+        menu->selecting = false;
+        Path path = Search_valid_path(menu->board, menu->position, menu->selection);
+
+        if (path.len > 0) {
+          *GameBoard_index(menu->board, menu->position) = 0;
+          *GameBoard_index(menu->board, menu->selection) = 0;
+        }
+      }
+    }
+  }
+
+  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+    if (IsKeyPressed(KEY_H)) {
+      menu->start_time -= 60e6;
+      Path path = Search_suggest_move(menu->board);
+      if (path.len >= 2) {
+        *GameBoard_index(menu->board, path.data[0]) = 0;
+        *GameBoard_index(menu->board, path.data[path.len - 1]) = 0;
       }
     }
   }
@@ -181,14 +211,25 @@ Scene Scene_game_update(Game *game, float dt) {
   const int w = menu->board.width;
   const int h = menu->board.height;
 
-  if (next_position.x != menu->position.x || next_position.y != menu->position.y) {
-    menu->position = next_position;
-    if (menu->position.x < 0) menu->position.x = 0;
-    if (menu->position.y < 0) menu->position.y = 0;
+  for (int i = 0; i < h; ++i) {
+    for (int j = 0; j < w; ++j) {
+      float *lerp = menu->board_lerp + (i * w + j);
 
-    if (menu->position.x >= w) menu->position.x = w - 1;
-    if (menu->position.y >= h) menu->position.y = h - 1;
+      if (menu->selecting && i == menu->selection.y && j == menu->selection.x) {
+        if (*lerp < 1) *lerp += 5 * dt;
+      } else {
+        if (*lerp > 0) *lerp -= 5 * dt;
+      }
+    }
+
   }
+
+  menu->position = next_position;
+  if (menu->position.x < 0) menu->position.x = 0;
+  if (menu->position.y < 0) menu->position.y = 0;
+
+  if (menu->position.x >= w) menu->position.x = w - 1;
+  if (menu->position.y >= h) menu->position.y = h - 1;
 
   const int gap_x = 8 * (w - 1);
   const int gap_y = 8 * (h - 1);
@@ -197,23 +238,32 @@ Scene Scene_game_update(Game *game, float dt) {
   const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - 64 - gap_y) / h;
 
   const int GRID_SIDE = side_x < side_y ? side_x : side_y;
-  const int GRID_TEXT = GRID_SIDE * 6 / 10;
-  const int GRID_PAD  = GRID_SIDE * 2 / 10;
 
   const int x0 = (SCREEN_WIDTH - GRID_SIDE * w - gap_x) / 2;
   const int y0 = HEADER_HEIGHT + (SCREEN_HEIGHT - HEADER_HEIGHT - GRID_SIDE * h - gap_y) / 2;
 
-  DrawRectangle(x0 + (GRID_SIDE + 8) * menu->position.x - 5, y0 + (GRID_SIDE + 8) * menu->position.y - 5, GRID_SIDE + 10, GRID_SIDE + 10, GRAY);
+  DrawRectangle(x0 + (GRID_SIDE + 8) * menu->position.x - 5,
+                y0 + (GRID_SIDE + 8) * menu->position.y - 5, GRID_SIDE + 10,
+                GRID_SIDE + 10, GRAY);
 
   int y = y0;
   for (int i = 0; i < h; ++i) {
     int x = x0;
     for (int j = 0; j < w; ++j) {
-      int val = *GameBoard_index(&menu->board, {i, j});
+      int val = *GameBoard_index(menu->board, {i, j});
+
+      DrawRectangle(x, y, GRID_SIDE, GRID_SIDE, WHITE);
       if (val) {
-        DrawRectangle(x, y, GRID_SIDE, GRID_SIDE, palette[val - 1]);
+        float t = easing_cubic(menu->board_lerp[i * w + j]);
+        
+        const float px = x + GRID_SIDE * t * 0.1f;
+        const float py = y + GRID_SIDE * t * 0.1f;
+        const float side = GRID_SIDE * (1 - t * 0.2f);
+        const int GRID_TEXT = side * 6 / 10;
+        const int GRID_PAD  = side * 2 / 10;
+        DrawRectangle(px, py, side, side, palette[val - 1]);
         char c[2] = { (char)('A' + val - 1) , '\0' };
-        DrawText(c, x + (GRID_SIDE - MeasureText(c, GRID_TEXT)) / 2, y + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
+        DrawText(c, px + 0.5f * (side - MeasureText(c, GRID_TEXT)), py + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
       }
 
       x += GRID_SIDE + 8;
@@ -235,7 +285,7 @@ Scene Scene_game_update(Game *game, float dt) {
 
 void Scene_game_unload(Game *game) {
   GameMenu *menu = &game->menu.game;
-
+  free(menu->board_lerp);
   GameBoard_deinit(&menu->board);
   (void)game;
 }
