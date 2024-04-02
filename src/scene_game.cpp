@@ -100,14 +100,13 @@ void Scene_game_load(Game *game) {
 
   menu->board_lerp = (float*)calloc(config.height * config.width, sizeof(float));
 
-  int idx = 0;
+  uint64_t *random_state = &game->current_user->info.random_state;
+  int idx = pcg32_bounded(random_state, config.num_classes) * 2;
   for (int i = 0; i < config.height; ++i) {
     for (int j = 0; j < config.width; ++j) {
       *GameBoard_index(menu->board, {i, j}) = (idx++ / 2) % config.num_classes + 1;
     }
   }
-
-  uint64_t *random_state = &game->current_user->info.random_state;
 
   int total = config.height * config.width;
   for (int i = 0; i < total - 1; ++i) {
@@ -290,35 +289,37 @@ Scene Scene_game_update(Game *game, float dt) {
     y += GRID_SIDE + 8;
   }
 
-  float x = 2 * menu->path_lerp - 1;
-  x *= x;
+  if (menu->path.len) {
+    float x = 2 * menu->path_lerp - 1;
+    x *= x;
 
-  Color path_color = palette[menu->path_val - 1];
-  path_color.g += (255 - path_color.g) * x;
-  path_color.r += (255 - path_color.r) * x;
-  path_color.b += (255 - path_color.b) * x;
+    Color path_color = palette[menu->path_val - 1];
+    path_color.g += (255 - path_color.g) * x;
+    path_color.r += (255 - path_color.r) * x;
+    path_color.b += (255 - path_color.b) * x;
 
-  for (int i = 0; i < menu->path.len; ++i) {
-    Index idx = menu->path.data[i];
-    DrawCircle(x0 + (GRID_SIDE + 8) * idx.x + GRID_SIDE / 2,
-               y0 + (GRID_SIDE + 8) * idx.y + GRID_SIDE / 2,
-               GRID_SIDE * 0.25f, path_color);
-  }
+    for (int i = 0; i < menu->path.len; ++i) {
+      Index idx = menu->path.data[i];
+      DrawCircle(x0 + (GRID_SIDE + 8) * idx.x + GRID_SIDE / 2,
+                 y0 + (GRID_SIDE + 8) * idx.y + GRID_SIDE / 2,
+                 GRID_SIDE * 0.25f, path_color);
+    }
 
-  for (int i = 1; i < menu->path.len; ++i) {
-    Index c0 = menu->path.data[i - 1];
-    Index c1 = menu->path.data[i];
+    for (int i = 1; i < menu->path.len; ++i) {
+      Index c0 = menu->path.data[i - 1];
+      Index c1 = menu->path.data[i];
 
-    Vector2 p0 = {
-      x0 + (GRID_SIDE + 8) * c0.x + GRID_SIDE * 0.5f,
-      y0 + (GRID_SIDE + 8) * c0.y + GRID_SIDE * 0.5f,
-    };
+      Vector2 p0 = {
+        x0 + (GRID_SIDE + 8) * c0.x + GRID_SIDE * 0.5f,
+        y0 + (GRID_SIDE + 8) * c0.y + GRID_SIDE * 0.5f,
+      };
 
-    Vector2 p1 = {
-      x0 + (GRID_SIDE + 8) * c1.x + GRID_SIDE * 0.5f,
-      y0 + (GRID_SIDE + 8) * c1.y + GRID_SIDE * 0.5f,
-    };
-    DrawLineEx(p0, p1, GRID_SIDE * 0.2, path_color);
+      Vector2 p1 = {
+        x0 + (GRID_SIDE + 8) * c1.x + GRID_SIDE * 0.5f,
+        y0 + (GRID_SIDE + 8) * c1.y + GRID_SIDE * 0.5f,
+      };
+      DrawLineEx(p0, p1, GRID_SIDE * 0.2, path_color);
+    }
   }
 
   DrawRectangle(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, LIGHTGRAY);
