@@ -46,7 +46,6 @@ struct GameConfig {
 };
 
 struct GameMenu {
-  uint32_t start_time;
   GameBoard board;
 
   Index pos;
@@ -62,6 +61,10 @@ struct GameMenu {
   Path path;
   int path_val;
   float path_lerp;
+
+  int score;
+  int remaining;
+  float score_timer;
 };
 
 struct Game {

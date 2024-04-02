@@ -19,7 +19,6 @@ Scene Scene_levels_update(Game *game, float dt) {
   const int grid_total = grid_rows * 3;
   const int grid_side = (SCREEN_WIDTH - 32 * 2 - 96 * 2) / 3;
   const int grid_textsize = grid_side - 128;
-  const int grid_off = (SCREEN_HEIGHT - HEADER_HEIGHT - (grid_side * grid_rows + 32 * (grid_rows - 1))) / 2;
 
   uint32_t *selection = &menu->current_selection;
 
@@ -65,7 +64,7 @@ Scene Scene_levels_update(Game *game, float dt) {
   Scene_draw_header(game, "Select level");
   
   const int x0 = 96;
-  const int y0 = HEADER_HEIGHT + grid_off;
+  const int y0 = (SCREEN_HEIGHT + HEADER_HEIGHT + 32 - (grid_side + 32) * grid_rows) / 2;
 
   const Color grid_colors[2] = { LIGHTGRAY, { 0, 255, 157, 255 } };
   const Color text_colors[2] = { DARKGRAY, BLACK };

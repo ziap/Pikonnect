@@ -12,7 +12,7 @@
   #define unreachable __builtin_unreachable()
 #endif
 
-extern float easing_cubic(float);
+extern float smoothstep(float);
 
 extern uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed);
 extern uint32_t pcg32(uint64_t *state);

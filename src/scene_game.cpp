@@ -21,9 +21,19 @@ static const LevelConfig configs[LEVEL_COUNT] = {
   { 10, 14, 26 },
 };
 
+// Compute the score bonus based on the time to find a match
+//
+// f(t) = c0 * t^5 + c1 * t^4 + c2 * t^3 + c3 * t^2 + c4 * t + c5
+// f(0) = 10
+// f(10) = 1
+// f'(0) = f'(10) = f''(0) = f''(10) = 0
+static int score(float t, int s) {
+  if (t > 10) return s;
+  return (int)(525000 - ((27 * t - 675) * t + 4500) * t * t * t) * s / 50000;
+}
+
 void Scene_game_load(Game *game) {
   GameMenu *menu = &game->menu.game;
-  menu->start_time = GetTime() * 1e6;
   menu->pos.x = 0;
   menu->pos.y = 0;
 
@@ -32,17 +42,22 @@ void Scene_game_load(Game *game) {
 
   menu->path_lerp = 0;
   menu->path.len = 0;
+  menu->score = 0;
+  menu->score_timer = 0;
 
   int level = game->config.level;
 
   LevelConfig config = configs[level];
   GameBoard_init(&menu->board, config.width, config.height);
 
+  menu->remaining = config.width * config.height;
+
   uint64_t *random_state = &game->current_user->info.random_state;
   int idx = pcg32_bounded(random_state, config.num_classes) * 2;
   for (int i = 0; i < config.height; ++i) {
     for (int j = 0; j < config.width; ++j) {
-      *GameBoard_index(menu->board, {i, j}) = (idx++ / 2) % config.num_classes + 1;
+      int *tile = GameBoard_index(menu->board, {i, j});
+      *tile = (idx++ / 2) % config.num_classes + 1;
     }
   }
 
@@ -58,15 +73,9 @@ void Scene_game_load(Game *game) {
   }
 }
 
-static const Dir opposite[DIR_LEN] = {DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT};
-
 Scene Scene_game_update(Game *game, float dt) {
   (void)dt;
   GameMenu *menu = &game->menu.game;
-  const uint32_t time_ms = GetTime() * 1e6 - menu->start_time;
-  const uint32_t time_s = time_ms / 1000000;
-  const int s = time_s % 60;
-  const int m = time_s / 60;
 
   const KeyboardKey keys[DIR_LEN][3] = {
     {KEY_UP, KEY_K, KEY_W},
@@ -98,6 +107,7 @@ Scene Scene_game_update(Game *game, float dt) {
 
   Index next_position = menu->pos;
 
+  const Dir opposite[DIR_LEN] = {DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT};
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (dispatching[dir]) {
       menu->as_delay[dir] = DAS;
@@ -133,9 +143,26 @@ Scene Scene_game_update(Game *game, float dt) {
           menu->path = path;
           menu->path_val = *GameBoard_index(menu->board, menu->pos);
           menu->path_lerp = 0;
+        
+          int len = 1;
+          for (int i = 1; i < path.len; ++i) {
+            Index p0 = path.data[i - 1];
+            Index p1 = path.data[i];
+
+            len += p1.x > p0.x ? p1.x - p0.x : p0.x - p1.x;
+            len += p1.y > p0.y ? p1.y - p0.y : p0.y - p1.y;
+          }
+
+          menu->score += score(menu->score_timer, len);
+          menu->score_timer = 0;
 
           *GameBoard_index(menu->board, menu->pos) = 0;
           *GameBoard_index(menu->board, menu->selection) = 0;
+          menu->remaining -= 2;
+
+          if (menu->remaining ==0 || Search_suggest_move(menu->board).len == 0) {
+            printf("Game over\n");
+          }
         } else {
           menu->selection = menu->pos;
           menu->selection_lerp = 1;
@@ -144,8 +171,9 @@ Scene Scene_game_update(Game *game, float dt) {
     }
   }
 
+  menu->score_timer += dt;
+
   if (IsKeyPressed(KEY_X)) {
-    menu->start_time -= 60e6;
     Path path = Search_suggest_move(menu->board);
     if (path.len >= 2) {
       menu->selecting = false;
@@ -155,6 +183,11 @@ Scene Scene_game_update(Game *game, float dt) {
 
       *GameBoard_index(menu->board, path.data[0]) = 0;
       *GameBoard_index(menu->board, path.data[path.len - 1]) = 0;
+      menu->remaining -= 2;
+
+      if (menu->remaining ==0 || Search_suggest_move(menu->board).len == 0) {
+        printf("Game over\n");
+      }
     }
   }
 
@@ -185,7 +218,7 @@ Scene Scene_game_update(Game *game, float dt) {
   const int grid_side = side_x < side_y ? side_x : side_y;
 
   const int x0 = (SCREEN_WIDTH - grid_side * w - gap_x) / 2;
-  const int y0 = (SCREEN_HEIGHT - HEADER_HEIGHT - grid_side * h - gap_y) / 2 + HEADER_HEIGHT;
+  const int y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - grid_side * h - gap_y) / 2;
 
   DrawRectangle(x0 + (grid_side + 8) * menu->pos.x - 5,
                 y0 + (grid_side + 8) * menu->pos.y - 5, grid_side + 10,
@@ -216,7 +249,7 @@ Scene Scene_game_update(Game *game, float dt) {
   if (menu->selecting) {
     int cursor_width = grid_side / 3;
 
-    float t = easing_cubic(menu->selection_lerp);
+    float t = smoothstep(menu->selection_lerp);
 
     int sx = x0 + (grid_side + 8) * menu->selection.x;
     int sy = y0 + (grid_side + 8) * menu->selection.y;
@@ -290,7 +323,7 @@ Scene Scene_game_update(Game *game, float dt) {
   snprintf(msg, sizeof(msg), "Level: %d", game->config.level + 1);
   DrawText(msg, 32, 32, 32, BLACK);
 
-  snprintf(msg, sizeof(msg), "%02d:%02d", m, s);
+  snprintf(msg, sizeof(msg), "Score: %d", menu->score);
   DrawText(msg, SCREEN_WIDTH - MeasureText(msg, 32) - 32, 32, 32, BLACK);
 
   return SCENE_GAME;

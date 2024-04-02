@@ -55,8 +55,6 @@ Scene Scene_home_update(Game *game, float dt) {
 
   Scene_draw_header(game, "Home");
 
-  const int remaining_height = SCREEN_HEIGHT - HEADER_HEIGHT;
-
   const char menu_names[3][12] = {
     "Classic", "Collapse", "Leaderboard"
   };
@@ -69,13 +67,13 @@ Scene Scene_home_update(Game *game, float dt) {
 
   const int offset_full = (SCREEN_WIDTH - 64) / 3;
 
-  int selection_y = HEADER_HEIGHT + (remaining_height - 112 * SELECTION_LEN - 32 * (SELECTION_LEN - 1)) / 2;
+  int y = (SCREEN_HEIGHT + HEADER_HEIGHT + 32 - 144 * SELECTION_LEN) / 2;
   for (int i = 0; i < SELECTION_LEN; ++i) {
-    const int offset = offset_full - (offset_full * 0.3f) * easing_cubic(menu->selection_lerp[i]);
-    DrawRectangle(32 + offset, selection_y, (SCREEN_WIDTH - 32) - offset, 112, menu_colors[i]);
+    const int offset = offset_full - (offset_full * 0.3f) * smoothstep(menu->selection_lerp[i]);
+    DrawRectangle(32 + offset, y, (SCREEN_WIDTH - 32) - offset, 112, menu_colors[i]);
     const char *txt = menu_names[i];
-    DrawText(txt, 192 + offset, selection_y + 32, 48, BLACK);
-    selection_y += 144;
+    DrawText(txt, 192 + offset, y + 32, 48, BLACK);
+    y += 144;
   }
 
   return SCENE_HOME;
