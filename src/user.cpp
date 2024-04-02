@@ -79,12 +79,7 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
 
   user->name = table->new_name;
   user->info.password_hash = hash;
-
-  for (int i = 0; i < LEVEL_COUNT; ++i) {
-    for (int j = 0; j < GAMEMODE_LEN; ++j) {
-      user->info.solve_time[i][j] = NOT_SOLVED;
-    }
-  }
+  user->info.unlocked = 0;
   
   user->info.random_state = fasthash64(username, len, hash) + table->len;
   pcg32(&user->info.random_state);

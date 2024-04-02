@@ -36,7 +36,7 @@ struct HomeMenu {
 };
 
 struct LevelsMenu {
-  int current_selection; 
+  uint32_t current_selection; 
   float selection_lerp[LEVEL_COUNT];
 };
 
@@ -48,9 +48,8 @@ struct GameConfig {
 struct GameMenu {
   uint32_t start_time;
   GameBoard board;
-  float *board_lerp;
 
-  Index position;
+  Index pos;
 
   float as_delay[DIR_LEN];
   Dir move_direction;
@@ -58,6 +57,7 @@ struct GameMenu {
 
   Index selection;
   bool selecting;
+  float selection_lerp;
 
   Path path;
   int path_val;

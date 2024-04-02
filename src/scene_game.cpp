@@ -1,8 +1,8 @@
 #include "scene_game.h"
 #include "utils.h"
+#include "palette.h"
 #include <raylib.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "search.h"
 
@@ -21,75 +21,15 @@ static const LevelConfig configs[LEVEL_COUNT] = {
   { 10, 14, 26 },
 };
 
-// r = 185 + 70 * sin(2pi * (0.55 + x / 26))
-// g = 180 + 75 * sin(2pi * (0.25 + x / 26))
-// b = 170 + 85 * sin(2pi * (0.10 + x / 26))
-//
-// Technique from: https://iquilezles.org/articles/palettes/
-static const Color palette[26] = {
-  { 163, 255, 219, 255 },
-  { 148, 252, 234, 255 },
-  { 134, 246, 246, 255 },
-  { 124, 236, 252, 255 },
-  { 117, 222, 254, 255 },
-  { 115, 206, 252, 255 },
-  { 116, 189, 244, 255 },
-  { 121, 170, 232, 255 },
-  { 130, 153, 216, 255 },
-  { 142, 137, 198, 255 },
-  { 157, 123, 178, 255 },
-  { 173, 113, 157, 255 },
-  { 190, 107, 137, 255 },
-  { 206, 105, 120, 255 },
-  { 221, 107, 105, 255 },
-  { 235, 113,  93, 255 },
-  { 245, 123,  87, 255 },
-  { 252, 137,  85, 255 },
-  { 254, 153,  87, 255 },
-  { 253, 170,  95, 255 },
-  { 248, 189, 107, 255 },
-  { 239, 206, 123, 255 },
-  { 227, 222, 141, 255 },
-  { 212, 236, 161, 255 },
-  { 196, 246, 182, 255 },
-  { 179, 252, 202, 255 },
-};
-
-static const Color palette_dark[26] = {
-  {45, 71, 61, 255},
-  {41, 70, 65, 255},
-  {37, 69, 69, 255},
-  {34, 66, 70, 255},
-  {32, 62, 71, 255},
-  {32, 57, 70, 255},
-  {32, 53, 68, 255},
-  {34, 47, 65, 255},
-  {36, 43, 60, 255},
-  {39, 38, 55, 255},
-  {44, 34, 50, 255},
-  {48, 31, 44, 255},
-  {53, 30, 38, 255},
-  {57, 29, 33, 255},
-  {62, 30, 29, 255},
-  {66, 31, 26, 255},
-  {68, 34, 24, 255},
-  {70, 38, 23, 255},
-  {71, 43, 24, 255},
-  {71, 47, 26, 255},
-  {69, 53, 30, 255},
-  {67, 57, 34, 255},
-  {63, 62, 39, 255},
-  {59, 66, 45, 255},
-  {55, 69, 51, 255},
-  {50, 70, 56, 255},
-};
-
 void Scene_game_load(Game *game) {
   GameMenu *menu = &game->menu.game;
   menu->start_time = GetTime() * 1e6;
-  menu->position.x = 0;
-  menu->position.y = 0;
+  menu->pos.x = 0;
+  menu->pos.y = 0;
+
   menu->selecting = false;
+  menu->selection_lerp = 0;
+
   menu->path_lerp = 0;
   menu->path.len = 0;
 
@@ -97,8 +37,6 @@ void Scene_game_load(Game *game) {
 
   LevelConfig config = configs[level];
   GameBoard_init(&menu->board, config.width, config.height);
-
-  menu->board_lerp = (float*)calloc(config.height * config.width, sizeof(float));
 
   uint64_t *random_state = &game->current_user->info.random_state;
   int idx = pcg32_bounded(random_state, config.num_classes) * 2;
@@ -158,7 +96,7 @@ Scene Scene_game_update(Game *game, float dt) {
     }
   }
 
-  Index next_position = menu->position;
+  Index next_position = menu->pos;
 
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (dispatching[dir]) {
@@ -182,23 +120,25 @@ Scene Scene_game_update(Game *game, float dt) {
   }
 
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
-    if (*GameBoard_index(menu->board, menu->position)) {
+    if (*GameBoard_index(menu->board, menu->pos)) {
       if (!menu->selecting) {
         menu->selecting = true;
-        menu->selection = menu->position;
+        menu->selection = menu->pos;
+        menu->selection_lerp = 1;
       } else {
-        Path path = Search_valid_path(menu->board, menu->position, menu->selection);
+        Path path = Search_valid_path(menu->board, menu->pos, menu->selection);
 
         if (path.len > 0) {
           menu->selecting = false;
           menu->path = path;
-          menu->path_val = *GameBoard_index(menu->board, menu->position);
+          menu->path_val = *GameBoard_index(menu->board, menu->pos);
           menu->path_lerp = 0;
 
-          *GameBoard_index(menu->board, menu->position) = 0;
+          *GameBoard_index(menu->board, menu->pos) = 0;
           *GameBoard_index(menu->board, menu->selection) = 0;
         } else {
-          menu->selection = menu->position;
+          menu->selection = menu->pos;
+          menu->selection_lerp = 1;
         }
       }
     }
@@ -221,32 +161,20 @@ Scene Scene_game_update(Game *game, float dt) {
   const int w = menu->board.width;
   const int h = menu->board.height;
 
-  for (int i = 0; i < h; ++i) {
-    for (int j = 0; j < w; ++j) {
-      float *lerp = menu->board_lerp + (i * w + j);
-
-      if (menu->selecting && i == menu->selection.y && j == menu->selection.x) {
-        *lerp += 5 * dt;
-        if (*lerp > 1) *lerp = 1;
-      } else {
-        *lerp -= 5 * dt;
-        if (*lerp < 0) *lerp = 0;
-      }
-    }
-
-  }
-
   menu->path_lerp += 3 * dt;
   if (menu->path_lerp > 1) {
     menu->path.len = 0;
   }
 
-  menu->position = next_position;
-  if (menu->position.x < 0) menu->position.x = 0;
-  if (menu->position.y < 0) menu->position.y = 0;
+  menu->selection_lerp -= 5 * dt;
+  if (menu->selection_lerp < 0) menu->selection_lerp = 0;
 
-  if (menu->position.x >= w) menu->position.x = w - 1;
-  if (menu->position.y >= h) menu->position.y = h - 1;
+  menu->pos = next_position;
+  if (menu->pos.x < 0) menu->pos.x = 0;
+  if (menu->pos.y < 0) menu->pos.y = 0;
+
+  if (menu->pos.x >= w) menu->pos.x = w - 1;
+  if (menu->pos.y >= h) menu->pos.y = h - 1;
 
   const int gap_x = 8 * (w - 1);
   const int gap_y = 8 * (h - 1);
@@ -254,40 +182,75 @@ Scene Scene_game_update(Game *game, float dt) {
   const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
   const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
 
-  const int GRID_SIDE = side_x < side_y ? side_x : side_y;
+  const int grid_side = side_x < side_y ? side_x : side_y;
 
-  const int x0 = (SCREEN_WIDTH - GRID_SIDE * w - gap_x) / 2;
-  const int y0 = HEADER_HEIGHT + (SCREEN_HEIGHT - HEADER_HEIGHT - GRID_SIDE * h - gap_y) / 2;
+  const int x0 = (SCREEN_WIDTH - grid_side * w - gap_x) / 2;
+  const int y0 = (SCREEN_HEIGHT - HEADER_HEIGHT - grid_side * h - gap_y) / 2 + HEADER_HEIGHT;
 
-  DrawRectangle(x0 + (GRID_SIDE + 8) * menu->position.x - 5,
-                y0 + (GRID_SIDE + 8) * menu->position.y - 5, GRID_SIDE + 10,
-                GRID_SIDE + 10, GRAY);
+  DrawRectangle(x0 + (grid_side + 8) * menu->pos.x - 5,
+                y0 + (grid_side + 8) * menu->pos.y - 5, grid_side + 10,
+                grid_side + 10, GRAY);
 
+  const int GRID_TEXT = grid_side * 0.6;
+  const int GRID_PAD = grid_side * 0.2;
   int y = y0;
   for (int i = 0; i < h; ++i) {
     int x = x0;
     for (int j = 0; j < w; ++j) {
       int val = *GameBoard_index(menu->board, {i, j});
 
-      DrawRectangle(x, y, GRID_SIDE, GRID_SIDE, WHITE);
+      DrawRectangle(x, y, grid_side, grid_side, WHITE);
       if (val) {
-        float t = easing_cubic(menu->board_lerp[i * w + j]);
-        
-        const float px = x + GRID_SIDE * t * 0.1f;
-        const float py = y + GRID_SIDE * t * 0.1f;
-        const float side = GRID_SIDE * (1 - t * 0.2f);
-        const int GRID_TEXT = side * 6 / 10;
-        const int GRID_PAD  = side * 2 / 10;
-        DrawRectangle(px, py, side, side, palette[val - 1]);
+        DrawRectangle(x, y, grid_side, grid_side, palette[val - 1]);
         char c[2] = { (char)('A' + val - 1) , '\0' };
-        DrawText(c, px + 0.5f * (side - MeasureText(c, GRID_TEXT)), py + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
+        DrawText(c, x + 0.5f * (grid_side - MeasureText(c, GRID_TEXT)),
+                 y + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
       }
 
-      x += GRID_SIDE + 8;
+      x += grid_side + 8;
     }
 
-    y += GRID_SIDE + 8;
+    y += grid_side + 8;
   }
+
+  if (menu->selecting) {
+    int cursor_width = grid_side / 3;
+
+    float t = easing_cubic(menu->selection_lerp);
+
+    int sx = x0 + (grid_side + 8) * menu->selection.x;
+    int sy = y0 + (grid_side + 8) * menu->selection.y;
+
+    Color c = palette[*GameBoard_index(menu->board, menu->selection) - 1];
+    c.r = c.r * 2 / 3;
+    c.g = c.g * 2 / 3;
+    c.b = c.b * 2 / 3;
+    
+    int x0 = sx - 4 - 4 * t;
+    int x1 = sx + 4 - 4 * t;
+
+    int x2 = sx + grid_side - cursor_width - 4 + 4 * t;
+    int x3 = sx + grid_side - 4 + 4 * t;
+
+    int y0 = sy - 4 - 4 * t;
+    int y2 = sy + grid_side - cursor_width - 4 + 4 * t;
+    int y1 = sy + 4 - 4 * t;
+    int y3 = sy + grid_side - 4 + 4 * t;
+
+    DrawRectangle(x0, y0, 8, 8 + cursor_width, c);
+    DrawRectangle(x1, y0, cursor_width, 8, c);
+
+    DrawRectangle(x2, y0, 8 + cursor_width, 8, c);
+    DrawRectangle(x3, y1, 8, cursor_width, c);
+
+    DrawRectangle(x0, y2, 8, 8 + cursor_width, c);
+    DrawRectangle(x1, y3, cursor_width, 8, c);
+
+    DrawRectangle(x2, y3, 8 + cursor_width, 8, c);
+    DrawRectangle(x3, y2, 8, cursor_width, c);
+  }
+
+  const float center = grid_side * 0.5f;
 
   if (menu->path.len) {
     float x = 2 * menu->path_lerp - 1;
@@ -300,9 +263,9 @@ Scene Scene_game_update(Game *game, float dt) {
 
     for (int i = 0; i < menu->path.len; ++i) {
       Index idx = menu->path.data[i];
-      DrawCircle(x0 + (GRID_SIDE + 8) * idx.x + GRID_SIDE / 2,
-                 y0 + (GRID_SIDE + 8) * idx.y + GRID_SIDE / 2,
-                 GRID_SIDE * 0.25f, path_color);
+      DrawCircle(x0 + (grid_side + 8) * idx.x + center,
+                 y0 + (grid_side + 8) * idx.y + center,
+                 grid_side * 0.125f, path_color);
     }
 
     for (int i = 1; i < menu->path.len; ++i) {
@@ -310,15 +273,15 @@ Scene Scene_game_update(Game *game, float dt) {
       Index c1 = menu->path.data[i];
 
       Vector2 p0 = {
-        x0 + (GRID_SIDE + 8) * c0.x + GRID_SIDE * 0.5f,
-        y0 + (GRID_SIDE + 8) * c0.y + GRID_SIDE * 0.5f,
+        x0 + (grid_side + 8) * c0.x + center,
+        y0 + (grid_side + 8) * c0.y + center,
       };
 
       Vector2 p1 = {
-        x0 + (GRID_SIDE + 8) * c1.x + GRID_SIDE * 0.5f,
-        y0 + (GRID_SIDE + 8) * c1.y + GRID_SIDE * 0.5f,
+        x0 + (grid_side + 8) * c1.x + center,
+        y0 + (grid_side + 8) * c1.y + center,
       };
-      DrawLineEx(p0, p1, GRID_SIDE * 0.2, path_color);
+      DrawLineEx(p0, p1, grid_side * 0.12, path_color);
     }
   }
 
@@ -335,7 +298,6 @@ Scene Scene_game_update(Game *game, float dt) {
 
 void Scene_game_unload(Game *game) {
   GameMenu *menu = &game->menu.game;
-  free(menu->board_lerp);
   GameBoard_deinit(&menu->board);
   (void)game;
 }
