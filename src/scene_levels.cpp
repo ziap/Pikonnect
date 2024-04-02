@@ -42,7 +42,7 @@ Scene Scene_levels_update(Game *game, float dt) {
   if (ControlsMenu_confirm()) {
     menu->selection_lerp[*selection] = 0;
 
-    if (*selection <= game->current_user->info.unlocked) {
+    if (*selection <= game->current_user->info.unlocked[game->config.gamemode]) {
       game->config.level = *selection;
       return SCENE_GAME;
     }
@@ -69,7 +69,7 @@ Scene Scene_levels_update(Game *game, float dt) {
   const Color grid_colors[2] = { LIGHTGRAY, { 0, 255, 157, 255 } };
   const Color text_colors[2] = { DARKGRAY, BLACK };
 
-  uint32_t unlocked = game->current_user->info.unlocked;
+  uint32_t unlocked = game->current_user->info.unlocked[game->config.gamemode];
   
   for (uint32_t i = 0; i < LEVEL_COUNT; ++i) {
     int x = x0 + (grid_side + 32) * (i % 3);

@@ -79,7 +79,8 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
 
   user->name = table->new_name;
   user->info.password_hash = hash;
-  user->info.unlocked = 0;
+  user->info.best_score = 0;
+  memset(user->info.unlocked, 0, sizeof(user->info.unlocked));
   
   user->info.random_state = fasthash64(username, len, hash) + table->len;
   pcg32(&user->info.random_state);

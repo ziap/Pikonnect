@@ -42,7 +42,12 @@ struct LevelsMenu {
 
 struct GameConfig {
   GameMode gamemode;
-  int level;
+  uint32_t level;
+};
+
+struct GameResult {
+  uint32_t last_score;
+  bool new_best;
 };
 
 struct GameMenu {
@@ -62,8 +67,8 @@ struct GameMenu {
   int path_val;
   float path_lerp;
 
-  int score;
-  int remaining;
+  uint32_t score;
+  uint32_t remaining;
   float score_timer;
   
   int grid_side;
@@ -71,16 +76,40 @@ struct GameMenu {
   int y0;
 };
 
+enum WonBtns {
+  WON_BTN_NEXT,
+  WON_BTN_MENU,
+  WON_BTN_LEN
+};
+
+enum LostBtns {
+  LOST_BTN_RESTART,
+  LOST_BTN_MENU,
+  LOST_BTN_LEN
+};
+
+struct WonMenu {
+  WonBtns selection;
+};
+
+struct LostMenu {
+  LostBtns selection;
+};
+
 struct Game {
+  // Global state
   UserTable users;
   User *current_user;
   GameConfig config;
+  GameResult result;
 
   union {
     LoginMenu login;
     HomeMenu home;
     LevelsMenu level;
     GameMenu game;
+    WonMenu won;
+    LostMenu lost;
   } menu;
 };
 

@@ -8,6 +8,7 @@
 #include "scene_home.h"
 #include "scene_levels.h"
 #include "scene_game.h"
+#include "scene_over.h"
 #include "scene_leaderboard.h"
 
 void Scene_draw_header(Game *game, const char *menu_name) {
@@ -32,6 +33,8 @@ static void (*const Scene_load_functions[SCENE_LEN])(Game *game) = {
   Scene_home_load,
   Scene_levels_load,
   Scene_game_load,
+  Scene_won_load,
+  Scene_lost_load,
   Scene_load_noop,
 };
 
@@ -40,6 +43,8 @@ static Scene (*const Scene_update_functions[SCENE_LEN])(Game *game, float dt) = 
   Scene_home_update,
   Scene_levels_update,
   Scene_game_update,
+  Scene_won_update,
+  Scene_lost_update,
   Scene_leaderboard_update
 };
 
@@ -48,6 +53,8 @@ static void (*const Scene_unload_functions[SCENE_LEN])(Game *game) = {
   Scene_unload_noop,
   Scene_unload_noop,
   Scene_game_unload,
+  Scene_unload_noop,
+  Scene_unload_noop,
   Scene_unload_noop,
 };
 

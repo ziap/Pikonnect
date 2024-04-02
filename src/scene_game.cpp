@@ -13,8 +13,8 @@ struct LevelConfig {
 };
 
 static const LevelConfig configs[LEVEL_COUNT] = {
-  {  6,  8,  9 },
   {  6,  6,  6 },
+  {  6,  8,  9 },
   {  7, 10, 13 },
   {  8, 11, 16 },
   {  9, 12, 20 },
@@ -27,16 +27,30 @@ enum GameStatus {
   STATUS_LOST
 };
 
-static GameStatus remove_tiles(Game *game, Index p1, Index p2) {
+static GameStatus remove_pair(Game *game, Index p1, Index p2) {
   GameMenu *menu = &game->menu.game;
 
   *GameBoard_index(menu->board, p1) = 0;
   *GameBoard_index(menu->board, p2) = 0;
   menu->remaining -= 2;
 
+  // TODO: Add collapse mode
   // TODO: Add tile removal effect
 
-  if (menu->remaining == 0) return STATUS_WON;
+  if (menu->remaining == 0) {
+    UserInfo *info = &game->current_user->info;
+    if (info->unlocked[game->config.gamemode] <= game->config.level) {
+      info->unlocked[game->config.gamemode] = game->config.level + 1;
+    }
+
+    game->result.new_best = info->best_score < menu->score;
+    if (game->result.new_best) {
+      info->best_score = menu->score; 
+    }
+
+    game->result.last_score = menu->score;
+    return STATUS_WON;
+  }
   if (Search_suggest_move(menu->board).len == 0) return STATUS_LOST;
 
   return STATUS_PLAYING;
@@ -53,7 +67,20 @@ static int score(float t, int s) {
   return (int)((500000 - ((27 * t - 675) * t + 4500) * t * t * t) * s + 25000) / 50000;
 }
 
-static void update_position(GameMenu *menu, float dt) {
+void update_size(GameMenu *menu, int w, int h) {
+  const int gap_x = 8 * (w - 1);
+  const int gap_y = 8 * (h - 1);
+
+  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
+
+  menu->grid_side = side_x < side_y ? side_x : side_y;
+
+  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
+  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
+}
+
+static void update_move(GameMenu *menu, float dt) {
   const KeyboardKey keys[DIR_LEN][3] = {
     {KEY_UP, KEY_K, KEY_W},
     {KEY_LEFT, KEY_H, KEY_A},
@@ -114,7 +141,7 @@ static void update_position(GameMenu *menu, float dt) {
   if (menu->pos.y >= menu->board.height) menu->pos.y = menu->board.height - 1;
 }
 
-static void update_selection(Game *game) {
+static GameStatus update_select(Game *game) {
   GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
@@ -144,12 +171,7 @@ static void update_selection(Game *game) {
           menu->score += score(menu->score_timer, len);
           menu->score_timer = 0;
 
-          GameStatus status = remove_tiles(game, menu->pos, menu->selection);
-          switch (status) {
-            case STATUS_WON: printf("won!\n"); break;
-            case STATUS_LOST: printf("won!\n"); break;
-            case STATUS_PLAYING: break;
-          }
+          return remove_pair(game, menu->pos, menu->selection);
         } else {
           menu->selection = menu->pos;
           menu->selection_lerp = 1;
@@ -157,9 +179,11 @@ static void update_selection(Game *game) {
       }
     }
   }
+
+  return STATUS_PLAYING;
 }
 
-static void update_suggest(Game *game) {
+static GameStatus update_suggest(Game *game) {
   GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_X)) {
@@ -170,14 +194,11 @@ static void update_suggest(Game *game) {
       menu->path_val = *GameBoard_index(menu->board, path.data[0]);
       menu->path_lerp = 0;
 
-      GameStatus status = remove_tiles(game, path.data[0], path.data[path.len - 1]);
-      switch (status) {
-        case STATUS_WON: printf("won!\n"); break;
-        case STATUS_LOST: printf("won!\n"); break;
-        case STATUS_PLAYING: break;
-      }
+      return remove_pair(game, path.data[0], path.data[path.len - 1]);
     }
   }
+
+  return STATUS_PLAYING;
 }
 
 static void update_interpolation(GameMenu *menu, float dt) {
@@ -208,13 +229,10 @@ void render_board(GameMenu *menu) {
         DrawText(c, x + 0.5f * (menu->grid_side - MeasureText(c, grid_text)),
                  y + grid_pad, grid_text, palette_dark[val - 1]);
       }
-
       x += menu->grid_side + 8;
     }
-
     y += menu->grid_side + 8;
   }
-
 }
 
 void render_selection(GameMenu *menu) {
@@ -331,28 +349,25 @@ void Scene_game_load(Game *game) {
     *p2 = t;
   }
 
-  const int w = menu->board.width;
-  const int h = menu->board.height;
-
-  const int gap_x = 8 * (w - 1);
-  const int gap_y = 8 * (h - 1);
-
-  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
-  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
-
-  menu->grid_side = side_x < side_y ? side_x : side_y;
-
-  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
-  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
+  update_size(menu, menu->board.width, menu->board.height);
 }
 
 Scene Scene_game_update(Game *game, float dt) {
   (void)dt;
   GameMenu *menu = &game->menu.game;
 
-  update_position(menu, dt);
-  update_selection(game);
-  update_suggest(game);
+  update_move(menu, dt);
+  switch (update_select(game)) {
+    case STATUS_PLAYING: break;
+    case STATUS_WON: return SCENE_WON;
+    case STATUS_LOST: return SCENE_LOST;
+  }
+
+  switch (update_suggest(game)) {
+    case STATUS_PLAYING: break;
+    case STATUS_WON: return SCENE_WON;
+    case STATUS_LOST: return SCENE_LOST;
+  }
 
   update_interpolation(menu, dt);
 

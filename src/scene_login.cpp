@@ -5,24 +5,21 @@
 #include <stdio.h>
 #include <string.h>
 
-const Color accent_color = 
-  { 0, 135, 204, 255 };
+static const Color accent_color = { 0, 135, 204, 255 };
 
-
-static void draw_title() {
-  const int TITLE_SIZE = 72;
+static void render_title() {
   const char title[] = "Pikachu Game";
-  DrawText(title, (SCREEN_WIDTH - MeasureText(title, TITLE_SIZE)) / 2, 150, TITLE_SIZE, accent_color);
+  DrawText(title, (SCREEN_WIDTH - MeasureText(title, 72)) / 2, 150, 72, accent_color);
 }
 
-static void draw_labels(const char** labels, int x, int y) {
+static void render_labels(const char** labels, int x, int y) {
   for (int i = 0; i < TEXTBOX_LEN; ++i) {
     DrawText(labels[i], x, y, 32, DARKGRAY);
     y += 64;
   }
 }
 
-static void draw_textboxes(int x, int y, int max_width, LoginTextBoxData *textboxes) {
+static void render_textboxes(int x, int y, int max_width, LoginTextBoxData *textboxes) {
   const char *ptr = textboxes[TEXTBOX_USERNAME].input;
   while (MeasureText(ptr, 32) > max_width) ++ptr;
   DrawText(ptr, x, y, 32, BLACK);
@@ -175,9 +172,9 @@ Scene Scene_login_update(Game *game, float dt) {
   const int labels_x = (SCREEN_WIDTH - field_width) / 2;
   const int textbox_x = labels_x + max_width;
 
-  draw_title();
-  draw_labels(textbox_labels, labels_x, 320);
-  draw_textboxes(textbox_x, 320, input_width, menu->textboxes);
+  render_title();
+  render_labels(textbox_labels, labels_x, 320);
+  render_textboxes(textbox_x, 320, input_width, menu->textboxes);
   draw_underlines(textbox_x, 320 + 32, input_width, menu->selected_textbox);
 
   float x0 = (float)(SCREEN_WIDTH - field_width) / 2;
