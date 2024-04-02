@@ -13,13 +13,34 @@ struct LevelConfig {
 };
 
 static const LevelConfig configs[LEVEL_COUNT] = {
-  {  6,  6,  6 },
   {  6,  8,  9 },
+  {  6,  6,  6 },
   {  7, 10, 13 },
   {  8, 11, 16 },
   {  9, 12, 20 },
   { 10, 14, 26 },
 };
+
+enum GameStatus {
+  STATUS_PLAYING,
+  STATUS_WON,
+  STATUS_LOST
+};
+
+static GameStatus remove_tiles(Game *game, Index p1, Index p2) {
+  GameMenu *menu = &game->menu.game;
+
+  *GameBoard_index(menu->board, p1) = 0;
+  *GameBoard_index(menu->board, p2) = 0;
+  menu->remaining -= 2;
+
+  // TODO: Add tile removal effect
+
+  if (menu->remaining == 0) return STATUS_WON;
+  if (Search_suggest_move(menu->board).len == 0) return STATUS_LOST;
+
+  return STATUS_PLAYING;
+}
 
 // Compute the score bonus based on the time to find a match
 //
@@ -29,54 +50,10 @@ static const LevelConfig configs[LEVEL_COUNT] = {
 // f'(0) = f'(10) = f''(0) = f''(10) = 0
 static int score(float t, int s) {
   if (t > 10) return s;
-  return (int)(525000 - ((27 * t - 675) * t + 4500) * t * t * t) * s / 50000;
+  return (int)((500000 - ((27 * t - 675) * t + 4500) * t * t * t) * s + 25000) / 50000;
 }
 
-void Scene_game_load(Game *game) {
-  GameMenu *menu = &game->menu.game;
-  menu->pos.x = 0;
-  menu->pos.y = 0;
-
-  menu->selecting = false;
-  menu->selection_lerp = 0;
-
-  menu->path_lerp = 0;
-  menu->path.len = 0;
-  menu->score = 0;
-  menu->score_timer = 0;
-
-  int level = game->config.level;
-
-  LevelConfig config = configs[level];
-  GameBoard_init(&menu->board, config.width, config.height);
-
-  menu->remaining = config.width * config.height;
-
-  uint64_t *random_state = &game->current_user->info.random_state;
-  int idx = pcg32_bounded(random_state, config.num_classes) * 2;
-  for (int i = 0; i < config.height; ++i) {
-    for (int j = 0; j < config.width; ++j) {
-      int *tile = GameBoard_index(menu->board, {i, j});
-      *tile = (idx++ / 2) % config.num_classes + 1;
-    }
-  }
-
-  int total = config.height * config.width;
-  for (int i = 0; i < total - 1; ++i) {
-    int j = pcg32_bounded(random_state, total - i) + i;
-    int *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
-    int *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
-
-    int t = *p1;
-    *p1 = *p2;
-    *p2 = t;
-  }
-}
-
-Scene Scene_game_update(Game *game, float dt) {
-  (void)dt;
-  GameMenu *menu = &game->menu.game;
-
+static void update_position(GameMenu *menu, float dt) {
   const KeyboardKey keys[DIR_LEN][3] = {
     {KEY_UP, KEY_K, KEY_W},
     {KEY_LEFT, KEY_H, KEY_A},
@@ -129,6 +106,17 @@ Scene Scene_game_update(Game *game, float dt) {
     }
   }
 
+  menu->pos = next_position;
+  if (menu->pos.x < 0) menu->pos.x = 0;
+  if (menu->pos.y < 0) menu->pos.y = 0;
+
+  if (menu->pos.x >= menu->board.width) menu->pos.x = menu->board.width - 1;
+  if (menu->pos.y >= menu->board.height) menu->pos.y = menu->board.height - 1;
+}
+
+static void update_selection(Game *game) {
+  GameMenu *menu = &game->menu.game;
+
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
     if (*GameBoard_index(menu->board, menu->pos)) {
       if (!menu->selecting) {
@@ -156,12 +144,11 @@ Scene Scene_game_update(Game *game, float dt) {
           menu->score += score(menu->score_timer, len);
           menu->score_timer = 0;
 
-          *GameBoard_index(menu->board, menu->pos) = 0;
-          *GameBoard_index(menu->board, menu->selection) = 0;
-          menu->remaining -= 2;
-
-          if (menu->remaining ==0 || Search_suggest_move(menu->board).len == 0) {
-            printf("Game over\n");
+          GameStatus status = remove_tiles(game, menu->pos, menu->selection);
+          switch (status) {
+            case STATUS_WON: printf("won!\n"); break;
+            case STATUS_LOST: printf("won!\n"); break;
+            case STATUS_PLAYING: break;
           }
         } else {
           menu->selection = menu->pos;
@@ -170,8 +157,10 @@ Scene Scene_game_update(Game *game, float dt) {
       }
     }
   }
+}
 
-  menu->score_timer += dt;
+static void update_suggest(Game *game) {
+  GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_X)) {
     Path path = Search_suggest_move(menu->board);
@@ -181,19 +170,17 @@ Scene Scene_game_update(Game *game, float dt) {
       menu->path_val = *GameBoard_index(menu->board, path.data[0]);
       menu->path_lerp = 0;
 
-      *GameBoard_index(menu->board, path.data[0]) = 0;
-      *GameBoard_index(menu->board, path.data[path.len - 1]) = 0;
-      menu->remaining -= 2;
-
-      if (menu->remaining ==0 || Search_suggest_move(menu->board).len == 0) {
-        printf("Game over\n");
+      GameStatus status = remove_tiles(game, path.data[0], path.data[path.len - 1]);
+      switch (status) {
+        case STATUS_WON: printf("won!\n"); break;
+        case STATUS_LOST: printf("won!\n"); break;
+        case STATUS_PLAYING: break;
       }
     }
   }
+}
 
-  const int w = menu->board.width;
-  const int h = menu->board.height;
-
+static void update_interpolation(GameMenu *menu, float dt) {
   menu->path_lerp += 3 * dt;
   if (menu->path_lerp > 1) {
     menu->path.len = 0;
@@ -202,57 +189,42 @@ Scene Scene_game_update(Game *game, float dt) {
   menu->selection_lerp -= 5 * dt;
   if (menu->selection_lerp < 0) menu->selection_lerp = 0;
 
-  menu->pos = next_position;
-  if (menu->pos.x < 0) menu->pos.x = 0;
-  if (menu->pos.y < 0) menu->pos.y = 0;
+  menu->score_timer += dt;
+}
 
-  if (menu->pos.x >= w) menu->pos.x = w - 1;
-  if (menu->pos.y >= h) menu->pos.y = h - 1;
-
-  const int gap_x = 8 * (w - 1);
-  const int gap_y = 8 * (h - 1);
-
-  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
-  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
-
-  const int grid_side = side_x < side_y ? side_x : side_y;
-
-  const int x0 = (SCREEN_WIDTH - grid_side * w - gap_x) / 2;
-  const int y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - grid_side * h - gap_y) / 2;
-
-  DrawRectangle(x0 + (grid_side + 8) * menu->pos.x - 5,
-                y0 + (grid_side + 8) * menu->pos.y - 5, grid_side + 10,
-                grid_side + 10, GRAY);
-
-  const int GRID_TEXT = grid_side * 0.6;
-  const int GRID_PAD = grid_side * 0.2;
-  int y = y0;
-  for (int i = 0; i < h; ++i) {
-    int x = x0;
-    for (int j = 0; j < w; ++j) {
+void render_board(GameMenu *menu) {
+  const int grid_text = menu->grid_side * 0.6;
+  const int grid_pad = menu->grid_side * 0.2;
+  int y = menu->y0;
+  for (int i = 0; i < menu->board.height; ++i) {
+    int x = menu->x0;
+    for (int j = 0; j < menu->board.width; ++j) {
       int val = *GameBoard_index(menu->board, {i, j});
 
-      DrawRectangle(x, y, grid_side, grid_side, WHITE);
+      DrawRectangle(x, y, menu->grid_side, menu->grid_side, WHITE);
       if (val) {
-        DrawRectangle(x, y, grid_side, grid_side, palette[val - 1]);
+        DrawRectangle(x, y, menu->grid_side, menu->grid_side, palette[val - 1]);
         char c[2] = { (char)('A' + val - 1) , '\0' };
-        DrawText(c, x + 0.5f * (grid_side - MeasureText(c, GRID_TEXT)),
-                 y + GRID_PAD, GRID_TEXT, palette_dark[val - 1]);
+        DrawText(c, x + 0.5f * (menu->grid_side - MeasureText(c, grid_text)),
+                 y + grid_pad, grid_text, palette_dark[val - 1]);
       }
 
-      x += grid_side + 8;
+      x += menu->grid_side + 8;
     }
 
-    y += grid_side + 8;
+    y += menu->grid_side + 8;
   }
 
+}
+
+void render_selection(GameMenu *menu) {
   if (menu->selecting) {
-    int cursor_width = grid_side / 3;
+    int cursor_width = menu->grid_side / 3;
 
     float t = smoothstep(menu->selection_lerp);
 
-    int sx = x0 + (grid_side + 8) * menu->selection.x;
-    int sy = y0 + (grid_side + 8) * menu->selection.y;
+    int sx = menu->x0 + (menu->grid_side + 8) * menu->selection.x;
+    int sy = menu->y0 + (menu->grid_side + 8) * menu->selection.y;
 
     Color c = palette[*GameBoard_index(menu->board, menu->selection) - 1];
     c.r = c.r * 2 / 3;
@@ -262,13 +234,13 @@ Scene Scene_game_update(Game *game, float dt) {
     int x0 = sx - 4 - 4 * t;
     int x1 = sx + 4 - 4 * t;
 
-    int x2 = sx + grid_side - cursor_width - 4 + 4 * t;
-    int x3 = sx + grid_side - 4 + 4 * t;
+    int x2 = sx + menu->grid_side - cursor_width - 4 + 4 * t;
+    int x3 = sx + menu->grid_side - 4 + 4 * t;
 
     int y0 = sy - 4 - 4 * t;
-    int y2 = sy + grid_side - cursor_width - 4 + 4 * t;
+    int y2 = sy + menu->grid_side - cursor_width - 4 + 4 * t;
     int y1 = sy + 4 - 4 * t;
-    int y3 = sy + grid_side - 4 + 4 * t;
+    int y3 = sy + menu->grid_side - 4 + 4 * t;
 
     DrawRectangle(x0, y0, 8, 8 + cursor_width, c);
     DrawRectangle(x1, y0, cursor_width, 8, c);
@@ -282,40 +254,117 @@ Scene Scene_game_update(Game *game, float dt) {
     DrawRectangle(x2, y3, 8 + cursor_width, 8, c);
     DrawRectangle(x3, y2, 8, cursor_width, c);
   }
+}
 
-  const float center = grid_side * 0.5f;
+void render_path(GameMenu *menu) {
+  const float center = menu->grid_side * 0.5f;
+
+  float x = 2 * menu->path_lerp - 1;
+  x *= x;
+
+  Color path_color = palette[menu->path_val - 1];
+  path_color.g += (255 - path_color.g) * x;
+  path_color.r += (255 - path_color.r) * x;
+  path_color.b += (255 - path_color.b) * x;
+
+  for (int i = 0; i < menu->path.len; ++i) {
+    Index idx = menu->path.data[i];
+    DrawCircle(menu->x0 + (menu->grid_side + 8) * idx.x + center,
+               menu->y0 + (menu->grid_side + 8) * idx.y + center,
+               menu->grid_side * 0.125f, path_color);
+  }
+
+  for (int i = 1; i < menu->path.len; ++i) {
+    Index c0 = menu->path.data[i - 1];
+    Index c1 = menu->path.data[i];
+
+    Vector2 p0 = {
+      menu->x0 + (menu->grid_side + 8) * c0.x + center,
+      menu->y0 + (menu->grid_side + 8) * c0.y + center,
+    };
+
+    Vector2 p1 = {
+      menu->x0 + (menu->grid_side + 8) * c1.x + center,
+      menu->y0 + (menu->grid_side + 8) * c1.y + center,
+    };
+    DrawLineEx(p0, p1, menu->grid_side * 0.12, path_color);
+  }
+}
+
+void Scene_game_load(Game *game) {
+  GameMenu *menu = &game->menu.game;
+  menu->pos.x = 0;
+  menu->pos.y = 0;
+
+  menu->selecting = false;
+  menu->selection_lerp = 0;
+
+  menu->path_lerp = 0;
+  menu->path.len = 0;
+  menu->score = 0;
+  menu->score_timer = 0;
+
+  int level = game->config.level;
+
+  LevelConfig config = configs[level];
+  GameBoard_init(&menu->board, config.width, config.height);
+
+  menu->remaining = config.width * config.height;
+
+  uint64_t *random_state = &game->current_user->info.random_state;
+  int idx = pcg32_bounded(random_state, config.num_classes) * 2;
+  for (int i = 0; i < config.height; ++i) {
+    for (int j = 0; j < config.width; ++j) {
+      int *tile = GameBoard_index(menu->board, {i, j});
+      *tile = (idx++ / 2) % config.num_classes + 1;
+    }
+  }
+
+  int total = config.height * config.width;
+  for (int i = 0; i < total - 1; ++i) {
+    int j = pcg32_bounded(random_state, total - i) + i;
+    int *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
+    int *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
+
+    int t = *p1;
+    *p1 = *p2;
+    *p2 = t;
+  }
+
+  const int w = menu->board.width;
+  const int h = menu->board.height;
+
+  const int gap_x = 8 * (w - 1);
+  const int gap_y = 8 * (h - 1);
+
+  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
+
+  menu->grid_side = side_x < side_y ? side_x : side_y;
+
+  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
+  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
+}
+
+Scene Scene_game_update(Game *game, float dt) {
+  (void)dt;
+  GameMenu *menu = &game->menu.game;
+
+  update_position(menu, dt);
+  update_selection(game);
+  update_suggest(game);
+
+  update_interpolation(menu, dt);
+
+  DrawRectangle(menu->x0 + (menu->grid_side + 8) * menu->pos.x - 5,
+                menu->y0 + (menu->grid_side + 8) * menu->pos.y - 5,
+                menu->grid_side + 10, menu->grid_side + 10, GRAY);
+
+  render_board(menu);
+  render_selection(menu);
 
   if (menu->path.len) {
-    float x = 2 * menu->path_lerp - 1;
-    x *= x;
-
-    Color path_color = palette[menu->path_val - 1];
-    path_color.g += (255 - path_color.g) * x;
-    path_color.r += (255 - path_color.r) * x;
-    path_color.b += (255 - path_color.b) * x;
-
-    for (int i = 0; i < menu->path.len; ++i) {
-      Index idx = menu->path.data[i];
-      DrawCircle(x0 + (grid_side + 8) * idx.x + center,
-                 y0 + (grid_side + 8) * idx.y + center,
-                 grid_side * 0.125f, path_color);
-    }
-
-    for (int i = 1; i < menu->path.len; ++i) {
-      Index c0 = menu->path.data[i - 1];
-      Index c1 = menu->path.data[i];
-
-      Vector2 p0 = {
-        x0 + (grid_side + 8) * c0.x + center,
-        y0 + (grid_side + 8) * c0.y + center,
-      };
-
-      Vector2 p1 = {
-        x0 + (grid_side + 8) * c1.x + center,
-        y0 + (grid_side + 8) * c1.y + center,
-      };
-      DrawLineEx(p0, p1, grid_side * 0.12, path_color);
-    }
+    render_path(menu);
   }
 
   DrawRectangle(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, LIGHTGRAY);

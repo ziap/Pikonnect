@@ -65,6 +65,10 @@ struct GameMenu {
   int score;
   int remaining;
   float score_timer;
+  
+  int grid_side;
+  int x0;
+  int y0;
 };
 
 struct Game {
