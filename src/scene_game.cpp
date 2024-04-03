@@ -77,7 +77,9 @@ static GameStatus remove_pair(Game *game, Index p1, Index p2) {
     game->result.last_score = menu->score;
     return STATUS_WON;
   }
-  if (Search_suggest_move(menu->board).len == 0) return STATUS_LOST;
+  if (Search_suggest_move(menu->board, &menu->search_queue).len == 0) {
+    return STATUS_LOST;
+  }
 
   return STATUS_PLAYING;
 }
@@ -164,7 +166,7 @@ static GameStatus update_select(Game *game) {
         menu->selection = menu->pos;
         menu->selection_lerp = 1;
       } else {
-        Path path = Search_valid_path(menu->board, menu->pos, menu->selection);
+        Path path = Search_valid_path(menu->board, menu->pos, menu->selection, &menu->search_queue);
 
         if (path.len > 0) {
           menu->selecting = false;
@@ -200,7 +202,7 @@ static GameStatus update_suggest(Game *game) {
   GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_X)) {
-    Path path = Search_suggest_move(menu->board);
+    Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
       menu->selecting = false;
       menu->path = path;
@@ -362,6 +364,8 @@ void Scene_game_load(Game *game) {
     *p2 = t;
   }
 
+  Queue_init(&menu->search_queue);
+
   update_size(menu, menu->board.width, menu->board.height);
 }
 
@@ -410,6 +414,7 @@ Scene Scene_game_update(Game *game, float dt) {
 
 void Scene_game_unload(Game *game) {
   GameMenu *menu = &game->menu.game;
+  Queue_deinit(&menu->search_queue);
   GameBoard_deinit(&menu->board);
   (void)game;
 }

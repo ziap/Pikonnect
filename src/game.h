@@ -52,6 +52,7 @@ struct GameResult {
 
 struct GameMenu {
   GameBoard board;
+  Queue search_queue;
 
   Index pos;
 
