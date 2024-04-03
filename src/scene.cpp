@@ -35,7 +35,7 @@ static void (*const Scene_load_functions[SCENE_LEN])(Game *game) = {
   Scene_game_load,
   Scene_won_load,
   Scene_lost_load,
-  Scene_load_noop,
+  Scene_leaderboard_load,
 };
 
 static Scene (*const Scene_update_functions[SCENE_LEN])(Game *game, float dt) = {

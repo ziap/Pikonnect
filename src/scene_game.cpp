@@ -61,14 +61,22 @@ static GameStatus remove_pair(Game *game, Path path) {
     if (GameBoard_remove_row(&menu->board, p1.y)) {
       draw_path = false;
       if (p2.y > p1.y) --p2.y;
+      if (menu->pos.y > p1.y) --menu->pos.y;
     }
     if (GameBoard_remove_col(&menu->board, p1.x)) {
       draw_path = false;
       if (p2.x > p1.x) --p2.x;
+      if (menu->pos.x > p1.x) --menu->pos.x;
     }
 
-    if (remove_second_x && GameBoard_remove_col(&menu->board, p2.x)) draw_path = false;
-    if (remove_second_y && GameBoard_remove_row(&menu->board, p2.y)) draw_path = false;
+    if (remove_second_x && GameBoard_remove_col(&menu->board, p2.x)) {
+      if (menu->pos.x > p2.x) --menu->pos.x;
+      draw_path = false;
+    }
+    if (remove_second_y && GameBoard_remove_row(&menu->board, p2.y)) {
+      if (menu->pos.y > p2.y) --menu->pos.y;
+      draw_path = false;
+    }
 
     update_size(menu, menu->board.width, menu->board.height);
   }

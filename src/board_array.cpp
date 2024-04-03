@@ -1,7 +1,6 @@
 #include "board_array.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 Tile *GameBoard_index(GameBoard board, Index idx) {
   return board.data + ((idx.y + 2) * (board.width + 4) + (idx.x + 2));
@@ -60,12 +59,17 @@ bool GameBoard_remove_col(GameBoard *board, int x) {
   }
 
   int w = board->width + 4;
-  Tile *ptr = board->data;
-  int total = w * (board->height + 4);
+  int move_size = (w - 1) * sizeof(Tile);
+  Tile *p1 = board->data + x + 2;
+  Tile *p2 = p1 + 1;
 
-  for (int i = 0; i < total; ++i) {
-    if (i % w != x + 2) *(ptr++) = board->data[i];
+  for (int i = 1; i < board->height + 4; ++i) {
+    memmove(p1, p2, move_size);
+    p1 += w - 1;
+    p2 += w;
   }
+
+  memmove(p1, p2, (w - (x + 3)) * sizeof(Tile));
 
   --board->width;
   return true;

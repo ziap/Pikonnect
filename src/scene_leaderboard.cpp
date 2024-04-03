@@ -1,6 +1,10 @@
 #include "scene_leaderboard.h"
 #include <raylib.h>
 
+void Scene_leaderboard_load(Game *game) {
+  (void)game;
+}
+
 Scene Scene_leaderboard_update(Game *game, float dt) {
   (void)dt;
 
