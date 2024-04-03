@@ -41,12 +41,16 @@ void update_size(GameMenu *menu, int w, int h) {
   menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
 }
 
-static GameStatus remove_pair(Game *game, Index p1, Index p2) {
+static GameStatus remove_pair(Game *game, Path path) {
+  Index p1 = path.data[0];
+  Index p2 = path.data[path.len - 1];
   GameMenu *menu = &game->menu.game;
 
   *GameBoard_index(menu->board, p1) = 0;
   *GameBoard_index(menu->board, p2) = 0;
   menu->remaining -= 2;
+
+  bool draw_path = true;
 
   // TODO: Add collapse mode
   // TODO: Add tile removal effect
@@ -54,13 +58,24 @@ static GameStatus remove_pair(Game *game, Index p1, Index p2) {
     bool remove_second_x = p2.x != p1.x;
     bool remove_second_y = p2.y != p1.y;
 
-    if (GameBoard_remove_row(&menu->board, p1.y) && p2.y > p1.y) --p2.y;
-    if (GameBoard_remove_col(&menu->board, p1.x) && p2.x > p1.x) --p2.x;
+    if (GameBoard_remove_row(&menu->board, p1.y)) {
+      draw_path = false;
+      if (p2.y > p1.y) --p2.y;
+    }
+    if (GameBoard_remove_col(&menu->board, p1.x)) {
+      draw_path = false;
+      if (p2.x > p1.x) --p2.x;
+    }
 
-    if (remove_second_x) GameBoard_remove_col(&menu->board, p2.x);
-    if (remove_second_y) GameBoard_remove_row(&menu->board, p2.y);
+    if (remove_second_x && GameBoard_remove_col(&menu->board, p2.x)) draw_path = false;
+    if (remove_second_y && GameBoard_remove_row(&menu->board, p2.y)) draw_path = false;
 
     update_size(menu, menu->board.width, menu->board.height);
+  }
+
+  if (draw_path) {
+    menu->path = path;
+    menu->path_lerp = 0;
   }
 
   if (menu->remaining == 0) {
@@ -170,9 +185,7 @@ static GameStatus update_select(Game *game) {
 
         if (path.len > 0) {
           menu->selecting = false;
-          menu->path = path;
           menu->path_val = *GameBoard_index(menu->board, menu->pos);
-          menu->path_lerp = 0;
         
           int len = 1;
           for (int i = 1; i < path.len; ++i) {
@@ -186,7 +199,7 @@ static GameStatus update_select(Game *game) {
           menu->score += score(menu->score_timer, len);
           menu->score_timer = 0;
 
-          return remove_pair(game, menu->pos, menu->selection);
+          return remove_pair(game, path);
         } else {
           menu->selection = menu->pos;
           menu->selection_lerp = 1;
@@ -205,11 +218,9 @@ static GameStatus update_suggest(Game *game) {
     Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
       menu->selecting = false;
-      menu->path = path;
       menu->path_val = *GameBoard_index(menu->board, path.data[0]);
-      menu->path_lerp = 0;
 
-      return remove_pair(game, path.data[0], path.data[path.len - 1]);
+      return remove_pair(game, path);
     }
   }
 
