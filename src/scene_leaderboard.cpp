@@ -39,7 +39,7 @@ Scene Scene_leaderboard_update(Game *game, float dt) {
 
   if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) return SCENE_HOME;
 
-  int y = (SCREEN_HEIGHT + HEADER_HEIGHT - 112 * 5) / 2;
+  int y = (SCREEN_HEIGHT + HEADER_HEIGHT - 112 * 5 + 16) / 2;
   int x = y - HEADER_HEIGHT;
   for (uint32_t i = 0; i < menu->top_len; ++i) {
     User *user = menu->top_users[i];
