@@ -1,14 +1,16 @@
 #include "board_array.h"
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-int *GameBoard_index(GameBoard board, Index idx) {
+Tile *GameBoard_index(GameBoard board, Index idx) {
   return board.data + ((idx.y + 2) * (board.width + 4) + (idx.x + 2));
 }
 
 void GameBoard_init(GameBoard *board, int width, int height) {
   board->width = width;
   board->height = height;
-  board->data = (int*)malloc((height + 4) * (width + 4) * sizeof(int*));
+  board->data = (Tile*)malloc((height + 4) * (width + 4) * sizeof(int*));
 
   for (int i = -2; i < height + 2; ++i) {
     *GameBoard_index(*board, {i, -2}) = -1;
@@ -38,4 +40,33 @@ void GameBoard_deinit(GameBoard *board) {
 Index Index_step(Index current, Dir dir) {
   Index next = next_index[dir];
   return {current.y + next.y, current.x + next.x};
+}
+
+bool GameBoard_remove_row(GameBoard *board, int y) {
+  for (int i = 0; i < board->width; ++i) {
+    if (*GameBoard_index(*board, {y, i})) return false;
+  }
+
+  int w = board->width + 4;
+  Tile *row = board->data + (y + 2) * w;
+  memmove(row, row + w, (board->height - y) * w * sizeof(Tile));
+  --board->height;
+  return true;
+}
+
+bool GameBoard_remove_col(GameBoard *board, int x) {
+  for (int i = 0; i < board->height; ++i) {
+    if (*GameBoard_index(*board, {i, x})) return false;
+  }
+
+  int w = board->width + 4;
+  Tile *ptr = board->data;
+  int total = w * (board->height + 4);
+
+  for (int i = 0; i < total; ++i) {
+    if (i % w != x + 2) *(ptr++) = board->data[i];
+  }
+
+  --board->width;
+  return true;
 }

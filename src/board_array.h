@@ -1,8 +1,12 @@
 #ifndef BOARD_ARRAY_H
 #define BOARD_ARRAY_H
 
+#include <stdint.h>
+
+typedef int8_t Tile;
+
 struct GameBoard {
-  int *data;
+  Tile *data;
   int width;
   int height;
 };
@@ -31,7 +35,10 @@ extern void GameBoard_init(GameBoard *board, int width, int height);
 extern void GameBoard_deinit(GameBoard *board);
 
 extern Index GameBoard_first(GameBoard *board);
-extern int *GameBoard_index(GameBoard board, Index idx);
+extern Tile *GameBoard_index(GameBoard board, Index idx);
+
+extern bool GameBoard_remove_row(GameBoard *board, int y);
+extern bool GameBoard_remove_col(GameBoard *board, int x);
 
 extern Index Index_step(Index index_current, Dir dir_next);
 

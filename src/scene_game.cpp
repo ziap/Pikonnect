@@ -27,6 +27,20 @@ enum GameStatus {
   STATUS_LOST
 };
 
+void update_size(GameMenu *menu, int w, int h) {
+  const int gap_x = 8 * (w - 1);
+  const int gap_y = 8 * (h - 1);
+
+  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
+  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
+
+  menu->grid_side = side_x < side_y ? side_x : side_y;
+  if (menu->grid_side > 96) menu->grid_side = 96;
+
+  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
+  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
+}
+
 static GameStatus remove_pair(Game *game, Index p1, Index p2) {
   GameMenu *menu = &game->menu.game;
 
@@ -36,6 +50,18 @@ static GameStatus remove_pair(Game *game, Index p1, Index p2) {
 
   // TODO: Add collapse mode
   // TODO: Add tile removal effect
+  if (game->config.gamemode == GAMEMODE_COLLAPSE) {
+    bool remove_second_x = p2.x != p1.x;
+    bool remove_second_y = p2.y != p1.y;
+
+    if (GameBoard_remove_row(&menu->board, p1.y) && p2.y > p1.y) --p2.y;
+    if (GameBoard_remove_col(&menu->board, p1.x) && p2.x > p1.x) --p2.x;
+
+    if (remove_second_x) GameBoard_remove_col(&menu->board, p2.x);
+    if (remove_second_y) GameBoard_remove_row(&menu->board, p2.y);
+
+    update_size(menu, menu->board.width, menu->board.height);
+  }
 
   if (menu->remaining == 0) {
     UserInfo *info = &game->current_user->info;
@@ -65,19 +91,6 @@ static GameStatus remove_pair(Game *game, Index p1, Index p2) {
 static int score(float t, int s) {
   if (t > 10) return s;
   return (int)((500000 - ((27 * t - 675) * t + 4500) * t * t * t) * s + 25000) / 50000;
-}
-
-void update_size(GameMenu *menu, int w, int h) {
-  const int gap_x = 8 * (w - 1);
-  const int gap_y = 8 * (h - 1);
-
-  const int side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
-  const int side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
-
-  menu->grid_side = side_x < side_y ? side_x : side_y;
-
-  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
-  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
 }
 
 static void update_move(GameMenu *menu, float dt) {
@@ -333,7 +346,7 @@ void Scene_game_load(Game *game) {
   int idx = pcg32_bounded(random_state, config.num_classes) * 2;
   for (int i = 0; i < config.height; ++i) {
     for (int j = 0; j < config.width; ++j) {
-      int *tile = GameBoard_index(menu->board, {i, j});
+      Tile *tile = GameBoard_index(menu->board, {i, j});
       *tile = (idx++ / 2) % config.num_classes + 1;
     }
   }
@@ -341,8 +354,8 @@ void Scene_game_load(Game *game) {
   int total = config.height * config.width;
   for (int i = 0; i < total - 1; ++i) {
     int j = pcg32_bounded(random_state, total - i) + i;
-    int *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
-    int *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
+    Tile *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
+    Tile *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
 
     int t = *p1;
     *p1 = *p2;
@@ -368,6 +381,8 @@ Scene Scene_game_update(Game *game, float dt) {
     case STATUS_WON: return SCENE_WON;
     case STATUS_LOST: return SCENE_LOST;
   }
+
+  if (IsKeyPressed(KEY_Q)) return SCENE_HOME;
 
   update_interpolation(menu, dt);
 
