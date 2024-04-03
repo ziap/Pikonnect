@@ -27,7 +27,7 @@ enum GameStatus {
   STATUS_LOST
 };
 
-void update_size(GameMenu *menu, int w, int h) {
+static void update_size(GameMenu *menu, int w, int h) {
   const int gap_x = 8 * (w - 1);
   const int gap_y = 8 * (h - 1);
 

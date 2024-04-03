@@ -75,6 +75,16 @@ static bool is_pressing_up() {
   return false;
 }
 
+static const char *textbox_names[TEXTBOX_LEN] = {
+  "username",
+  "password",
+};
+
+static const char *textbox_labels[TEXTBOX_LEN] = {
+  "Username: ",
+  "Password: ",
+};
+
 void Scene_login_load(Game *game) {
   LoginMenu *menu = &game->menu.login;
   menu->selected_textbox = TEXTBOX_USERNAME;
@@ -87,6 +97,14 @@ void Scene_login_load(Game *game) {
     menu->textboxes[i].len = 0;
     menu->textboxes[i].cap = INIT_CAP;
   }
+
+  menu->max_width = MeasureText("username", 32);
+  for (int i = 1; i < TEXTBOX_LEN; ++i) {
+    int w = MeasureText(textbox_labels[i], 32);
+    if (w > menu->max_width) menu->max_width = w;
+  }
+
+  menu->input_width = MeasureText("***************", 32);
 }
 
 void Scene_login_unload(Game *game) {
@@ -101,24 +119,7 @@ Scene Scene_login_update(Game *game, float dt) {
 
   LoginMenu *menu = &game->menu.login;
 
-  const char *textbox_names[TEXTBOX_LEN] = {
-    "username",
-    "password",
-  };
-
-  const char *textbox_labels[TEXTBOX_LEN] = {
-    "Username: ",
-    "Password: ",
-  };
-
-  int max_width = MeasureText("username", 32);
-  for (int i = 1; i < TEXTBOX_LEN; ++i) {
-    int w = MeasureText(textbox_labels[i], 32);
-    max_width = w > max_width ? w : max_width;
-  }
-
-  const int input_width = MeasureText("***************", 32);
-  const int field_width = max_width + input_width;
+  const int field_width = menu->max_width + menu->input_width;
 
   if (is_pressing_down()) {
     menu->selected_textbox = (LoginTextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
@@ -170,12 +171,12 @@ Scene Scene_login_update(Game *game, float dt) {
   }
 
   const int labels_x = (SCREEN_WIDTH - field_width) / 2;
-  const int textbox_x = labels_x + max_width;
+  const int textbox_x = labels_x + menu->max_width;
 
   render_title();
   render_labels(textbox_labels, labels_x, 320);
-  render_textboxes(textbox_x, 320, input_width, menu->textboxes);
-  draw_underlines(textbox_x, 320 + 32, input_width, menu->selected_textbox);
+  render_textboxes(textbox_x, 320, menu->input_width, menu->textboxes);
+  draw_underlines(textbox_x, 320 + 32, menu->input_width, menu->selected_textbox);
 
   float x0 = (float)(SCREEN_WIDTH - field_width) / 2;
   float x1 = x0 - 16;
@@ -187,7 +188,7 @@ Scene Scene_login_update(Game *game, float dt) {
   float y3 = y0 + 16;
   const Color selector_color = menu->message[0] ? RED : accent_color;
   DrawTriangle({x2, y1}, {x2, y2}, {x1, y3}, selector_color);
-  DrawRectangle(x0 + max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), input_width, 5, selector_color);
+  DrawRectangle(x0 + menu->max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), menu->input_width, 5, selector_color);
 
   const char login_msg[] = "Press [ENTER] to log in";
   DrawText(login_msg, (SCREEN_WIDTH - MeasureText(login_msg, 24)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 2), 24, GRAY);

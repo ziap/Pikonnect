@@ -19,7 +19,7 @@ struct UserTable {
   char *names;
   uint32_t names_len;
   char *new_name;
-  User *users;
+  User *data;
   uint32_t len;
 };
 

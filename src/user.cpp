@@ -17,17 +17,17 @@ void UserTable_load(UserTable *table) {
     table->names = (char*)malloc(table->names_len + 1);
     fread(table->names, table->names_len, 1, f);
     fread(&table->len, sizeof(table->len), 1, f);
-    table->users = (User*)malloc((table->len + 1) * sizeof(User));
+    table->data = (User*)malloc((table->len + 1) * sizeof(User));
 
     char *ptr = table->names;
 
     for (uint32_t i = 0; i < table->len; ++i) {
-      table->users[i].name = ptr;
+      table->data[i].name = ptr;
       ptr += strlen(ptr) + 1;
-      fread(&table->users[i].info, sizeof(table->users[i].info), 1, f);
+      fread(&table->data[i].info, sizeof(table->data[i].info), 1, f);
     }
   } else {
-    table->users = (User*)malloc(sizeof(User));
+    table->data = (User*)malloc(sizeof(User));
     table->len = 0;
     table->names = nullptr;
     table->names_len = 0;
@@ -47,7 +47,7 @@ void UserTable_save(UserTable *table) {
     if (table->new_name) fwrite(table->new_name, names_len - table->names_len, 1, f);
     fwrite(&table->len, sizeof(table->len), 1, f);
     for (uint32_t i = 0; i < table->len; ++i) {
-      User *user = table->users + i;
+      User *user = table->data + i;
       fwrite(&user->info, sizeof(user->info), 1, f);
     }
   } else {
@@ -56,21 +56,21 @@ void UserTable_save(UserTable *table) {
 
   if (table->new_name) free(table->new_name);
   free(table->names);
-  free(table->users);
+  free(table->data);
 }
 
 User *UserTable_login(UserTable *table, const char *username, const char *password) {
   const uint64_t hash = fasthash64(password, strlen(password), MAGIC);
 
   for (uint32_t i = 0; i < table->len; ++i) {
-    User *user = table->users + i;
+    User *user = table->data + i;
 
     if (strcmp(username, user->name) == 0) {
       return hash == user->info.password_hash ? user : nullptr;
     }
   }
 
-  User *user = table->users + table->len++;
+  User *user = table->data + table->len++;
   const int len = strlen(username);
   char *buf = (char*)malloc(len + 1);
 

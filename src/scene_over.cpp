@@ -87,7 +87,7 @@ Scene Scene_lost_update(Game *game, float dt) {
   LostMenu *menu = &game->menu.lost;
   (void)dt;
   draw_text_centered("You lost!", 150, 104, accent_color);
-  draw_text_centered("Do you want to try again?", 318, 32, DARKGRAY);
+  draw_text_centered("You ran out of move!", 318, 32, DARKGRAY);
 
   if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
     menu->selection = (LostBtns)((menu->selection + LOST_BTN_LEN - 1) % LOST_BTN_LEN);

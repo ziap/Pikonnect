@@ -21,6 +21,8 @@ struct LoginMenu {
   LoginTextBox selected_textbox;
   char message[64];
   LoginTextBoxData textboxes[TEXTBOX_LEN];
+  int max_width;
+  int input_width;
 };
 
 enum HomeSelection {
@@ -97,6 +99,12 @@ struct LostMenu {
   LostBtns selection;
 };
 
+struct LeaderboardMenu {
+  User *top_users[5];
+  uint32_t top_len;
+  int index_width;
+};
+
 struct Game {
   // Global state
   UserTable users;
@@ -111,6 +119,7 @@ struct Game {
     GameMenu game;
     WonMenu won;
     LostMenu lost;
+    LeaderboardMenu leaderboard;
   } menu;
 };
 
