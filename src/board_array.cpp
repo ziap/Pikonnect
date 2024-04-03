@@ -48,7 +48,7 @@ bool GameBoard_remove_row(GameBoard *board, int y) {
 
   int w = board->width + 4;
   Tile *row = board->data + (y + 2) * w;
-  memmove(row, row + w, (board->height - y) * w * sizeof(Tile));
+  memmove(row, row + w, (board->height - y + 1) * w * sizeof(Tile));
   --board->height;
   return true;
 }

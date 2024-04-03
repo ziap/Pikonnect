@@ -20,10 +20,6 @@ void Scene_draw_header(Game *game, const char *menu_name) {
   DrawText(msg, SCREEN_WIDTH - MeasureText(msg, 32) - 32, 32, 32, DARKGRAY);
 }
 
-static void Scene_load_noop(Game *game) {
-  (void)game;
-}
-
 static void Scene_unload_noop(Game *game) {
   (void)game;
 }
