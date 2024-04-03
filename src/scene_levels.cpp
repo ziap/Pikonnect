@@ -48,6 +48,8 @@ Scene Scene_levels_update(Game *game, float dt) {
     }
   }
 
+  if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) return SCENE_HOME;
+
   const float ANIMATION_SPEED = 10;
   float *lerp = menu->selection_lerp + *selection;
   *lerp = *lerp < 1 ? *lerp + ANIMATION_SPEED * dt : 1;
