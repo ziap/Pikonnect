@@ -100,6 +100,7 @@ static GameStatus remove_pair(Game *game, Path path) {
     game->result.last_score = menu->score;
     return STATUS_WON;
   }
+
   if (Search_suggest_move(menu->board, &menu->search_queue).len == 0) {
     return STATUS_LOST;
   }
@@ -109,9 +110,10 @@ static GameStatus remove_pair(Game *game, Path path) {
 
 // Compute the score bonus based on the time to find a match
 //
-// f(t) = c0 * t^5 + c1 * t^4 + c2 * t^3 + c3 * t^2 + c4 * t + c5
-// f(0) = 10
-// f(10) = 1
+// f(t) = (c0 * t^5 + c1 * t^4 + c2 * t^3 + c3 * t^2 + c4 * t + c5) * s
+//
+// f(0) = 10 * s
+// f(10) = s
 // f'(0) = f'(10) = f''(0) = f''(10) = 0
 static int score(float t, int s) {
   if (t > 10) return s;
@@ -319,7 +321,16 @@ void render_path(GameMenu *menu) {
   path_color.r += (255 - path_color.r) * x;
   path_color.b += (255 - path_color.b) * x;
 
-  for (int i = 0; i < menu->path.len; ++i) {
+  Index begin = menu->path.data[0];
+  Index end = menu->path.data[menu->path.len - 1];
+
+  Color end_color = menu->path_lerp < 0.5f ? palette[menu->path_val - 1] : path_color;
+  int begin_x = menu->x0 + (menu->grid_side + 8) * begin.x;
+  int begin_y = menu->y0 + (menu->grid_side + 8) * begin.y;
+  int end_x = menu->x0 + (menu->grid_side + 8) * end.x;
+  int end_y = menu->y0 + (menu->grid_side + 8) * end.y;
+
+  for (int i = 1; i < menu->path.len - 1; ++i) {
     Index idx = menu->path.data[i];
     DrawCircle(menu->x0 + (menu->grid_side + 8) * idx.x + center,
                menu->y0 + (menu->grid_side + 8) * idx.y + center,
@@ -341,6 +352,25 @@ void render_path(GameMenu *menu) {
     };
     DrawLineEx(p0, p1, menu->grid_side * 0.12, path_color);
   }
+
+  Color text_color = palette_dark[menu->path_val - 1];
+  if (menu->path_lerp >= 0.5f) {
+    text_color.g += (255 - text_color.g) * x;
+    text_color.r += (255 - text_color.r) * x;
+    text_color.b += (255 - text_color.b) * x;
+  }
+
+  DrawRectangle(begin_x, begin_y, menu->grid_side, menu->grid_side, end_color);
+  DrawRectangle(end_x, end_y, menu->grid_side, menu->grid_side, end_color);
+
+  const int grid_text = menu->grid_side * 0.6;
+  const int grid_pad = menu->grid_side * 0.2;
+  char c[2] = { (char)('A' + menu->path_val - 1) , '\0' };
+  DrawText(c, begin_x + 0.5f * (menu->grid_side - MeasureText(c, grid_text)),
+           begin_y + grid_pad, grid_text, text_color);
+
+  DrawText(c, end_x + 0.5f * (menu->grid_side - MeasureText(c, grid_text)),
+           end_y + grid_pad, grid_text, text_color);
 }
 
 void Scene_game_load(Game *game) {
