@@ -77,6 +77,14 @@ struct GameMenu {
   bool hinting;
   Index hint_indices[2];
   float hint_timer;
+
+  int collapse_row[2];
+  int collapse_row_len;
+
+  int collapse_col[2];
+  int collapse_col_len;
+
+  float collapse_timer;
   
   int grid_side;
   int x0;

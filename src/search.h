@@ -22,8 +22,6 @@ struct Queue {
   uint32_t cap;
 };
 
-const int INIT_CAP = 1024;
-
 void Queue_clear(Queue *q);
 void Queue_init(Queue *q);
 void Queue_deinit(Queue *q);

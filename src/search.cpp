@@ -1,7 +1,9 @@
 #include "search.h"
-#include "board_array.h"
+
 #include <stdlib.h>
 #include <string.h>
+
+#include "board_array.h"
 
 const Dir next_dirs[DIR_LEN][2] = {
   {DIR_LEFT, DIR_RIGHT},
@@ -16,6 +18,7 @@ void Queue_clear(Queue *q) {
   q->len = 0;
 }
 
+const int INIT_CAP = 1024;
 void Queue_init(Queue *q) {
   q->data = (Vertex*)malloc(INIT_CAP * sizeof(Vertex));
   q->cap = INIT_CAP;

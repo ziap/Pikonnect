@@ -1,9 +1,9 @@
 #include "scene.h"
-#include "config.h"
 
 #include <raylib.h>
 #include <stdio.h>
 
+#include "config.h"
 #include "scene_login.h"
 #include "scene_home.h"
 #include "scene_levels.h"

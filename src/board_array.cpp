@@ -1,7 +1,9 @@
 #include "board_array.h"
-#include "utils.h"
+
 #include <stdlib.h>
 #include <string.h>
+
+#include "utils.h"
 
 static const Index next_index[DIR_LEN] = {
   {-1, 0},
@@ -17,7 +19,7 @@ Tile *GameBoard_index(GameBoard board, Index idx) {
 void GameBoard_init(GameBoard *board, int width, int height, int num_classes, uint64_t *random_state) {
   board->width = width;
   board->height = height;
-  board->data = (Tile*)malloc((height + 4) * (width + 4) * sizeof(int*));
+  board->data = (Tile*)malloc((height + 4) * (width + 4) * sizeof(Tile));
 
   for (int i = -2; i < height + 2; ++i) {
     *GameBoard_index(*board, {i, -2}) = -1;

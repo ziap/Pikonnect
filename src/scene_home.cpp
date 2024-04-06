@@ -1,7 +1,8 @@
 #include "scene_home.h"
-#include "utils.h"
+
 #include <raylib.h>
 
+#include "utils.h"
 #include "controls_menu.h"
 
 void Scene_home_load(Game *game) {

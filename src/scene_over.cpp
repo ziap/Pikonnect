@@ -1,9 +1,10 @@
 #include "scene_over.h"
-#include "controls_menu.h"
-#include "utils.h"
 
 #include <raylib.h>
 #include <stdio.h>
+
+#include "controls_menu.h"
+#include "utils.h"
 
 static const Color accent_color = { 0, 135, 204, 255 };
 

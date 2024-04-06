@@ -1,7 +1,8 @@
 #include "scene_levels.h"
-#include "controls_menu.h"
 
 #include <raylib.h>
+
+#include "controls_menu.h"
 
 void Scene_levels_load(Game *game) {
   LevelsMenu *menu= &game->menu.level;

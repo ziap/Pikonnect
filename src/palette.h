@@ -10,7 +10,7 @@
 //
 // Technique from: https://iquilezles.org/articles/palettes/
 extern const Color palette[];
-
 extern const Color palette_dark[];
+extern const Color palette_select[];
 
 #endif

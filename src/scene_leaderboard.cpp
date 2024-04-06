@@ -1,6 +1,8 @@
 #include "scene_leaderboard.h"
+
 #include <stdio.h>
 #include <raylib.h>
+
 #include "palette.h"
 
 static void insert_leaderboard(User **list, User *user, int pos) {
