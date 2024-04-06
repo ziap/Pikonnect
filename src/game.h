@@ -73,6 +73,10 @@ struct GameMenu {
   uint32_t score;
   uint32_t remaining;
   float score_timer;
+
+  bool hinting;
+  Index hint_indices[2];
+  float hint_timer;
   
   int grid_side;
   int x0;

@@ -1,6 +1,7 @@
 #include "scene_game.h"
 #include "utils.h"
 #include "palette.h"
+#include <math.h>
 #include <raylib.h>
 #include <stdio.h>
 
@@ -135,7 +136,7 @@ static void update_move(GameMenu *menu, float dt) {
     for (int i = 0; i < 3; ++i) {
       if (IsKeyDown(keys[dir][i])) pressing[dir] = true;
     }
-  }
+    }
 
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (pressing[dir]) {
@@ -206,8 +207,12 @@ static GameStatus update_select(Game *game) {
             len += p1.y > p0.y ? p1.y - p0.y : p0.y - p1.y;
           }
 
-          menu->score += score(menu->score_timer, len);
-          menu->score_timer = 0;
+          if (!menu->hinting) {
+            menu->score += score(menu->score_timer, len);
+            menu->score_timer = 0;
+          } else {
+            menu->hinting = false;
+          }
 
           return remove_pair(game, path);
         } else {
@@ -227,10 +232,10 @@ static GameStatus update_suggest(Game *game) {
   if (IsKeyPressed(KEY_X)) {
     Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
-      menu->selecting = false;
-      menu->path_val = *GameBoard_index(menu->board, path.data[0]);
-
-      return remove_pair(game, path);
+      menu->hinting = true;
+      menu->hint_timer = 0;
+      menu->hint_indices[0] = path.data[0];
+      menu->hint_indices[1] = path.data[path.len - 1];
     }
   }
 
@@ -238,7 +243,7 @@ static GameStatus update_suggest(Game *game) {
 }
 
 static void update_interpolation(GameMenu *menu, float dt) {
-  menu->path_lerp += 3 * dt;
+  menu->path_lerp += 5 * dt;
   if (menu->path_lerp > 1) {
     menu->path.len = 0;
   }
@@ -247,6 +252,7 @@ static void update_interpolation(GameMenu *menu, float dt) {
   if (menu->selection_lerp < 0) menu->selection_lerp = 0;
 
   menu->score_timer += dt;
+  menu->hint_timer += dt;
 }
 
 void render_board(GameMenu *menu) {
@@ -386,6 +392,9 @@ void Scene_game_load(Game *game) {
   menu->score = 0;
   menu->score_timer = 0;
 
+  menu->hinting = false;
+  menu->hint_timer = 0;
+
   int level = game->config.level;
 
   LevelConfig config = configs[level];
@@ -444,6 +453,17 @@ Scene Scene_game_update(Game *game, float dt) {
                 menu->grid_side + 10, menu->grid_side + 10, GRAY);
 
   render_board(menu);
+
+  if (menu->hinting) {
+    for (int i = 0; i < 2; ++i) {
+      uint8_t alpha = 72 + 72 * sin(5 * menu->hint_timer);
+      Color hint_color = { 255, 255, 255, alpha };
+      DrawRectangle(menu->x0 + (menu->grid_side + 8) * menu->hint_indices[i].x,
+                    menu->y0 + (menu->grid_side + 8) * menu->hint_indices[i].y,
+                    menu->grid_side, menu->grid_side, hint_color);
+    }
+  }
+
   render_selection(menu);
 
   if (menu->path.len) {
