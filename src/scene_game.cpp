@@ -136,7 +136,7 @@ static void update_move(GameMenu *menu, float dt) {
     for (int i = 0; i < 3; ++i) {
       if (IsKeyDown(keys[dir][i])) pressing[dir] = true;
     }
-    }
+  }
 
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (pressing[dir]) {
@@ -398,29 +398,11 @@ void Scene_game_load(Game *game) {
   int level = game->config.level;
 
   LevelConfig config = configs[level];
-  GameBoard_init(&menu->board, config.width, config.height);
 
   menu->remaining = config.width * config.height;
 
-  uint64_t *random_state = &game->current_user->info.random_state;
-  int idx = pcg32_bounded(random_state, config.num_classes) * 2;
-  for (int i = 0; i < config.height; ++i) {
-    for (int j = 0; j < config.width; ++j) {
-      Tile *tile = GameBoard_index(menu->board, {i, j});
-      *tile = (idx++ / 2) % config.num_classes + 1;
-    }
-  }
-
-  int total = config.height * config.width;
-  for (int i = 0; i < total - 1; ++i) {
-    int j = pcg32_bounded(random_state, total - i) + i;
-    Tile *p1 = GameBoard_index(menu->board, {i / config.width, i % config.width});
-    Tile *p2 = GameBoard_index(menu->board, {j / config.width, j % config.width});
-
-    int t = *p1;
-    *p1 = *p2;
-    *p2 = t;
-  }
+  GameBoard_init(&menu->board, config.width, config.height, config.num_classes,
+                 &game->current_user->info.random_state);
 
   Queue_init(&menu->search_queue);
 

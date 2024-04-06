@@ -24,14 +24,8 @@ enum Dir {
   DIR_LEN
 };
 
-static const Index next_index[DIR_LEN] = {
-  {-1, 0},
-  {0, -1},
-  {1, 0},
-  {0, 1}
-};
-
-extern void GameBoard_init(GameBoard *board, int width, int height);
+extern void GameBoard_init(GameBoard *board, int width, int height,
+                           int num_classes, uint64_t *random_state);
 extern void GameBoard_deinit(GameBoard *board);
 
 extern Index GameBoard_first(GameBoard *board);

@@ -1,12 +1,20 @@
 #include "board_array.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <string.h>
+
+static const Index next_index[DIR_LEN] = {
+  {-1, 0},
+  {0, -1},
+  {1, 0},
+  {0, 1}
+};
 
 Tile *GameBoard_index(GameBoard board, Index idx) {
   return board.data + ((idx.y + 2) * (board.width + 4) + (idx.x + 2));
 }
 
-void GameBoard_init(GameBoard *board, int width, int height) {
+void GameBoard_init(GameBoard *board, int width, int height, int num_classes, uint64_t *random_state) {
   board->width = width;
   board->height = height;
   board->data = (Tile*)malloc((height + 4) * (width + 4) * sizeof(int*));
@@ -29,6 +37,25 @@ void GameBoard_init(GameBoard *board, int width, int height) {
   for (int i = 0; i < width; ++i) {
     *GameBoard_index(*board, {-1, i}) = 0;
     *GameBoard_index(*board, {height, i}) = 0;
+  }
+
+  int idx = pcg32_bounded(random_state, num_classes) * 2;
+  for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+      Tile *tile = GameBoard_index(*board, {i, j});
+      *tile = (idx++ / 2) % num_classes + 1;
+    }
+  }
+
+  int total = height * width;
+  for (int i = 0; i < total - 1; ++i) {
+    int j = pcg32_bounded(random_state, total - i) + i;
+    Tile *p1 = GameBoard_index(*board, {i / width, i % width});
+    Tile *p2 = GameBoard_index(*board, {j / width, j % width});
+
+    int t = *p1;
+    *p1 = *p2;
+    *p2 = t;
   }
 }
 
