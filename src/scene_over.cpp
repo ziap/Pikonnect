@@ -1,6 +1,5 @@
 #include "scene_over.h"
 
-#include <raylib.h>
 #include <stdio.h>
 
 #include "controls_menu.h"
@@ -30,14 +29,17 @@ Scene Scene_won_update(Game *game, float dt) {
 
   if (game->config.level + 1 < LEVEL_COUNT) {
     if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
+      PlaySound(game->sounds[SOUND_CLICK]);
       menu->selection = (WonBtns)((menu->selection + WON_BTN_LEN - 1) % WON_BTN_LEN);
     }
 
     if (ControlsMenu_right() || ControlsMenu_tab_next()) {
+      PlaySound(game->sounds[SOUND_CLICK]);
       menu->selection = (WonBtns)((menu->selection + 1) % WON_BTN_LEN);
     }
 
     if (ControlsMenu_confirm()) {
+      PlaySound(game->sounds[SOUND_SELECT]);
       switch (menu->selection) {
         case WON_BTN_NEXT: {
           game->config.level++;
@@ -70,7 +72,10 @@ Scene Scene_won_update(Game *game, float dt) {
       x += text_width[i] + 64;
     }
   } else {
-    if (ControlsMenu_confirm()) return SCENE_HOME;
+    if (ControlsMenu_confirm()) {
+      PlaySound(game->sounds[SOUND_SELECT]);
+      return SCENE_HOME;
+    }
 
     const char *txt = "Main menu";
     draw_text_centered(txt, 446, 32, accent_color);
@@ -91,14 +96,17 @@ Scene Scene_lost_update(Game *game, float dt) {
   draw_text_centered("No valid move left, try again?", 318, 32, DARKGRAY);
 
   if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->selection = (LostBtns)((menu->selection + LOST_BTN_LEN - 1) % LOST_BTN_LEN);
   }
 
   if (ControlsMenu_right() || ControlsMenu_tab_next()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->selection = (LostBtns)((menu->selection + 1) % LOST_BTN_LEN);
   }
 
   if (ControlsMenu_confirm()) {
+    PlaySound(game->sounds[SOUND_SELECT]);
     switch (menu->selection) {
       case LOST_BTN_RESTART: return SCENE_GAME;
       case LOST_BTN_MENU: return SCENE_HOME;

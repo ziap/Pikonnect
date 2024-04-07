@@ -1,6 +1,5 @@
 #include "scene.h"
 
-#include <raylib.h>
 #include <stdio.h>
 
 #include "config.h"

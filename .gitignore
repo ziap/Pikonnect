@@ -3,3 +3,6 @@ raylib-5.0_linux_amd64
 game
 game.exe
 users.db
+src/sound/wav2h
+src/sound/wav2h.exe
+src/sound/*.h

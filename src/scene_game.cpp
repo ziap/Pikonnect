@@ -1,7 +1,6 @@
 #include "scene_game.h"
 
 #include <math.h>
-#include <raylib.h>
 #include <stdio.h>
 
 #include "utils.h"
@@ -138,7 +137,8 @@ static int score(float t, int s) {
   return (int)((500000 - ((27 * t - 675) * t + 4500) * t * t * t) * s + 25000) / 50000;
 }
 
-static void update_move(GameMenu *menu, float dt) {
+static void update_move(Game *game, float dt) {
+  GameMenu *menu = &game->menu.game;
   const KeyboardKey keys[DIR_LEN][3] = {
     {KEY_UP, KEY_K, KEY_W},
     {KEY_LEFT, KEY_H, KEY_A},
@@ -175,6 +175,7 @@ static void update_move(GameMenu *menu, float dt) {
       menu->as_delay[dir] = DAS;
       menu->move_direction = (Dir)dir;
 
+      PlaySound(game->sounds[SOUND_CLICK]);
       next_position = Index_step(next_position, (Dir)dir);
     } else if (pressing[dir]) {
       if (!pressing[opposite[dir]]) {
@@ -185,6 +186,7 @@ static void update_move(GameMenu *menu, float dt) {
         menu->as_delay[dir] -= dt;
         if (menu->as_delay[dir] <= 0) {
           menu->as_delay[dir] = ARR;
+          PlaySound(game->sounds[SOUND_CLICK]);
           next_position = Index_step(next_position, (Dir)dir);
         }
       }
@@ -205,6 +207,7 @@ static GameStatus update_select(Game *game) {
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
     if (*GameBoard_index(menu->board, menu->pos)) {
       if (!menu->selecting) {
+        PlaySound(game->sounds[SOUND_SELECT]);
         menu->selecting = true;
         menu->selection = menu->pos;
         menu->selection_lerp = 1;
@@ -212,6 +215,7 @@ static GameStatus update_select(Game *game) {
         Path path = Search_valid_path(menu->board, menu->pos, menu->selection, &menu->search_queue);
 
         if (path.len > 0) {
+          PlaySound(game->sounds[SOUND_CORRECT]);
           menu->selecting = false;
           menu->path_val = *GameBoard_index(menu->board, menu->pos);
         
@@ -233,6 +237,7 @@ static GameStatus update_select(Game *game) {
 
           return remove_pair(game, path);
         } else {
+          PlaySound(game->sounds[SOUND_SELECT]);
           menu->selection = menu->pos;
           menu->selection_lerp = 1;
         }
@@ -247,6 +252,7 @@ static GameStatus update_suggest(Game *game) {
   GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_X)) {
+    PlaySound(game->sounds[SOUND_SELECT]);
     Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
       menu->hinting = true;
@@ -461,7 +467,7 @@ Scene Scene_game_update(Game *game, float dt) {
   (void)dt;
   GameMenu *menu = &game->menu.game;
 
-  update_move(menu, dt);
+  update_move(game, dt);
   switch (update_select(game)) {
     case STATUS_PLAYING: break;
     case STATUS_WON: return SCENE_WON;

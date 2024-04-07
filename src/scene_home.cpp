@@ -1,7 +1,5 @@
 #include "scene_home.h"
 
-#include <raylib.h>
-
 #include "utils.h"
 #include "controls_menu.h"
 
@@ -18,14 +16,17 @@ Scene Scene_home_update(Game *game, float dt) {
   HomeMenu *menu = &game->menu.home;
 
   if (ControlsMenu_down() || ControlsMenu_tab_next()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->current_selection = (HomeSelection)((menu->current_selection + 1) % SELECTION_LEN);
   }
 
   if (ControlsMenu_up() || ControlsMenu_tab_prev()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->current_selection = (HomeSelection)((menu->current_selection + SELECTION_LEN - 1) % SELECTION_LEN);
   }
 
   if (ControlsMenu_confirm()) {
+    PlaySound(game->sounds[SOUND_SELECT]);
     switch (menu->current_selection) {
       case SELECTION_CLASSIC: {
         game->config.gamemode = GAMEMODE_CLASSIC;

@@ -1,6 +1,5 @@
 #include "scene_login.h"
 
-#include <raylib.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -122,10 +121,12 @@ Scene Scene_login_update(Game *game, float dt) {
   const int field_width = menu->max_width + menu->input_width;
 
   if (is_pressing_down()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->selected_textbox = (LoginTextBox)((menu->selected_textbox + 1) % TEXTBOX_LEN);
   }
 
   if (is_pressing_up()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     menu->selected_textbox = (LoginTextBox)((menu->selected_textbox + TEXTBOX_LEN - 1) % TEXTBOX_LEN);
   }
 
@@ -164,6 +165,7 @@ Scene Scene_login_update(Game *game, float dt) {
       if (login_result == nullptr) {
         snprintf(menu->message, sizeof(menu->message), "Wrong password for user %s!", menu->textboxes[TEXTBOX_USERNAME].input);
       } else {
+        PlaySound(game->sounds[SOUND_SELECT]);
         game->current_user = login_result;
         return SCENE_HOME;
       }

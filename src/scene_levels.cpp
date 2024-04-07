@@ -1,7 +1,5 @@
 #include "scene_levels.h"
 
-#include <raylib.h>
-
 #include "controls_menu.h"
 
 void Scene_levels_load(Game *game) {
@@ -24,23 +22,29 @@ Scene Scene_levels_update(Game *game, float dt) {
   uint32_t *selection = &menu->current_selection;
 
   if (ControlsMenu_up()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     *selection = (*selection + grid_total - 3) % grid_total;
   }
   if (ControlsMenu_down()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     *selection = (*selection + 3) % grid_total;
   }
   if (*selection >= LEVEL_COUNT) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     *selection = LEVEL_COUNT - 1;
   }
 
   if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     *selection = (*selection + LEVEL_COUNT - 1) % LEVEL_COUNT;
   }
   if (ControlsMenu_right() || ControlsMenu_tab_next()) {
+    PlaySound(game->sounds[SOUND_CLICK]);
     *selection = (*selection + 1) % LEVEL_COUNT;
   }
 
   if (ControlsMenu_confirm()) {
+    PlaySound(game->sounds[SOUND_SELECT]);
     menu->selection_lerp[*selection] = 0;
 
     if (*selection <= game->current_user->info.unlocked[game->config.gamemode]) {
@@ -49,7 +53,10 @@ Scene Scene_levels_update(Game *game, float dt) {
     }
   }
 
-  if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) return SCENE_HOME;
+  if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) {
+    PlaySound(game->sounds[SOUND_SELECT]);
+    return SCENE_HOME;
+  }
 
   const float ANIMATION_SPEED = 10;
   float *lerp = menu->selection_lerp + *selection;

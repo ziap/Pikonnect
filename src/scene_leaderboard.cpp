@@ -1,7 +1,6 @@
 #include "scene_leaderboard.h"
 
 #include <stdio.h>
-#include <raylib.h>
 
 #include "palette.h"
 
@@ -39,7 +38,10 @@ Scene Scene_leaderboard_update(Game *game, float dt) {
   (void)dt;
   LeaderboardMenu *menu = &game->menu.leaderboard;
 
-  if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) return SCENE_HOME;
+  if (IsKeyPressed(KEY_Q) || IsKeyPressedRepeat(KEY_Q)) {
+    PlaySound(game->sounds[SOUND_SELECT]);
+    return SCENE_HOME;
+  }
 
   int y = (SCREEN_HEIGHT + HEADER_HEIGHT - 112 * 5 + 16) / 2;
   int x = y - HEADER_HEIGHT;

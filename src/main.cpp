@@ -1,4 +1,3 @@
-#include <raylib.h>
 #include <stdio.h>
 
 #include "scene.h"
@@ -8,10 +7,11 @@ int main() {
   // Initalize the window
   SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
+  InitAudioDevice();
 
   Scene scene = SCENE_LOGIN;
   Game game;
-  
+
   Scene_init(scene, &game);
 
   while (!WindowShouldClose()) {

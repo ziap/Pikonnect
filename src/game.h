@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <raylib.h>
+
 #include "search.h"
 #include "user.h"
 #include "board_array.h"
@@ -40,16 +42,6 @@ struct HomeMenu {
 struct LevelsMenu {
   uint32_t current_selection; 
   float selection_lerp[LEVEL_COUNT];
-};
-
-struct GameConfig {
-  GameMode gamemode;
-  uint32_t level;
-};
-
-struct GameResult {
-  uint32_t last_score;
-  bool new_best;
 };
 
 struct GameMenu {
@@ -117,12 +109,29 @@ struct LeaderboardMenu {
   int index_width;
 };
 
+enum GameSounds {
+  SOUND_CLICK,
+  SOUND_SELECT,
+  SOUND_CORRECT,
+  SOUND_LEN
+};
+
 struct Game {
   // Global state
   UserTable users;
   User *current_user;
-  GameConfig config;
-  GameResult result;
+
+  struct {
+    GameMode gamemode;
+    uint32_t level;
+  } config;
+
+  struct {
+    uint32_t last_score;
+    bool new_best;
+  } result;
+
+  Sound sounds[SOUND_LEN];
 
   union {
     LoginMenu login;
