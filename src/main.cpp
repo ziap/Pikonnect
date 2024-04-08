@@ -1,12 +1,11 @@
 #include <stdio.h>
 
 #include "scene.h"
-#include "config.h"
 
 int main() {
   // Initalize the window
-  SetConfigFlags(FLAG_VSYNC_HINT);
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pikachu game");
+  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+  InitWindow(1024, 768, "Pikachu game");
   InitAudioDevice();
 
   Scene scene = SCENE_LOGIN;
@@ -26,7 +25,7 @@ int main() {
     // Display the FPS
     char buf[64];
     snprintf(buf, sizeof(buf), "FPS: %d", GetFPS());
-    DrawText(buf, 20, SCREEN_HEIGHT - 40, 20, GREEN);
+    DrawText(buf, 20, GetScreenHeight() - 40, 20, GREEN);
     EndDrawing();
   }
 

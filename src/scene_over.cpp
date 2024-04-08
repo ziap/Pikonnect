@@ -8,7 +8,7 @@
 static const Color accent_color = { 0, 135, 204, 255 };
 
 static void draw_text_centered(const char* title, int y, int size, Color c) {
-  DrawText(title, (SCREEN_WIDTH - MeasureText(title, size)) / 2, y, size, c);
+  DrawText(title, (GetScreenWidth() - MeasureText(title, size)) / 2, y, size, c);
 }
 
 void Scene_won_load(Game *game) {
@@ -65,7 +65,7 @@ Scene Scene_won_update(Game *game, float dt) {
 
     total_width += 64 * (WON_BTN_LEN - 1);
     int y = 446;
-    int x = (SCREEN_WIDTH - total_width) / 2;
+    int x = (GetScreenWidth() - total_width) / 2;
     for (int i = 0; i < WON_BTN_LEN; ++i) {
       Color c = menu->selection == i ? accent_color : GRAY;
       DrawText(btns[i], x, y, 32, c);
@@ -129,7 +129,7 @@ Scene Scene_lost_update(Game *game, float dt) {
 
   total_width += 64 * (LOST_BTN_LEN - 1);
   int y = 446;
-  int x = (SCREEN_WIDTH - total_width) / 2;
+  int x = (GetScreenWidth() - total_width) / 2;
   for (int i = 0; i < LOST_BTN_LEN; ++i) {
     Color c = menu->selection == i ? accent_color : GRAY;
     DrawText(btns[i], x, y, 32, c);

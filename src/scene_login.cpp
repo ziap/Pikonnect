@@ -8,7 +8,7 @@ static const Color accent_color = { 0, 135, 204, 255 };
 
 static void render_title() {
   const char title[] = "Pikachu Game";
-  DrawText(title, (SCREEN_WIDTH - MeasureText(title, 72)) / 2, 150, 72, accent_color);
+  DrawText(title, (GetScreenWidth() - MeasureText(title, 72)) / 2, 150, 72, accent_color);
 }
 
 static void render_labels(const char** labels, int x, int y) {
@@ -172,7 +172,7 @@ Scene Scene_login_update(Game *game, float dt) {
     }
   }
 
-  const int labels_x = (SCREEN_WIDTH - field_width) / 2;
+  const int labels_x = (GetScreenWidth() - field_width) / 2;
   const int textbox_x = labels_x + menu->max_width;
 
   render_title();
@@ -180,7 +180,7 @@ Scene Scene_login_update(Game *game, float dt) {
   render_textboxes(textbox_x, 320, menu->input_width, menu->textboxes);
   draw_underlines(textbox_x, 320 + 32, menu->input_width, menu->selected_textbox);
 
-  float x0 = (float)(SCREEN_WIDTH - field_width) / 2;
+  float x0 = (float)(GetScreenWidth() - field_width) / 2;
   float x1 = x0 - 16;
   float x2 = x0 - 32;
 
@@ -193,8 +193,8 @@ Scene Scene_login_update(Game *game, float dt) {
   DrawRectangle(x0 + menu->max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), menu->input_width, 5, selector_color);
 
   const char login_msg[] = "Press [ENTER] to log in";
-  DrawText(login_msg, (SCREEN_WIDTH - MeasureText(login_msg, 24)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 2), 24, GRAY);
-  DrawText(menu->message, (SCREEN_WIDTH - MeasureText(menu->message, 32)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 5), 32, RED);
+  DrawText(login_msg, (GetScreenWidth() - MeasureText(login_msg, 24)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 2), 24, GRAY);
+  DrawText(menu->message, (GetScreenWidth() - MeasureText(menu->message, 32)) / 2, 320 + 32 * (TEXTBOX_LEN * 2 + 5), 32, RED);
 
   return SCENE_LOGIN;
 }

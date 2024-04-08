@@ -12,12 +12,15 @@ void Scene_levels_load(Game *game) {
 }
 
 Scene Scene_levels_update(Game *game, float dt) {
-  LevelsMenu *menu= &game->menu.level;
+  LevelsMenu *menu = &game->menu.level;
 
   const int grid_rows = (LEVEL_COUNT + 2) / 3;
   const int grid_total = grid_rows * 3;
-  const int grid_side = (SCREEN_WIDTH - 32 * 2 - 96 * 2) / 3;
-  const int grid_textsize = grid_side - 128;
+  const int grid_side_x = (GetScreenWidth() - 256) / 3;
+  const int grid_side_y = (GetScreenHeight() - HEADER_HEIGHT - 192 - (grid_rows - 1) * 32) / grid_rows;
+  const int grid_side = grid_side_y < grid_side_x ? grid_side_y : grid_side_x;
+  const int grid_textsize = grid_side * 6 / 10;
+  const int grid_pad = grid_side * 2 / 10;
 
   uint32_t *selection = &menu->current_selection;
 
@@ -73,8 +76,8 @@ Scene Scene_levels_update(Game *game, float dt) {
 
   Scene_draw_header(game, "Select level");
   
-  const int x0 = 96;
-  const int y0 = (SCREEN_HEIGHT + HEADER_HEIGHT + 32 - (grid_side + 32) * grid_rows) / 2;
+  const int x0 = (GetScreenWidth() - grid_side * 3 - 64) / 2;
+  const int y0 = (GetScreenHeight() + HEADER_HEIGHT + 32 - (grid_side + 32) * grid_rows) / 2;
 
   const Color grid_colors[2] = { LIGHTGRAY, { 0, 255, 157, 255 } };
   const Color text_colors[2] = { DARKGRAY, BLACK };
@@ -90,7 +93,7 @@ Scene Scene_levels_update(Game *game, float dt) {
     DrawRectangle(x - 8 * t, y - 8 * t, grid_side + 16 * t, grid_side + 16 * t, grid_colors[i <= unlocked]);
     char c[2] = { (char)('1' + i), '\0'};
 
-    DrawText(c, x + (grid_side - MeasureText(c, grid_textsize)) * 0.5f - 8 * t, y + 64 - 8 * t, grid_textsize + 16 * t, text_colors[i <= unlocked]);
+    DrawText(c, x + (grid_side - MeasureText(c, grid_textsize)) * 0.5f - 8 * t, y + grid_pad - 8 * t, grid_textsize + 16 * t, text_colors[i <= unlocked]);
   }
   
   return SCENE_LEVELS;

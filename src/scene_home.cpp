@@ -67,15 +67,16 @@ Scene Scene_home_update(Game *game, float dt) {
     { 245, 123,  87, 255 },
   };
 
-  const int offset_full = (SCREEN_WIDTH - 64) / 3;
+  const int stride = 112 + (GetScreenHeight() - HEADER_HEIGHT) / 20;
+  const int offset_full = (GetScreenWidth() - 64) * 2 / 5;
 
-  int y = (SCREEN_HEIGHT + HEADER_HEIGHT + 32 - 144 * SELECTION_LEN) / 2;
+  int y = (GetScreenHeight() + HEADER_HEIGHT + 32 - stride * SELECTION_LEN) / 2;
   for (int i = 0; i < SELECTION_LEN; ++i) {
-    const int offset = offset_full - (offset_full * 0.3f) * smoothstep(menu->selection_lerp[i]);
-    DrawRectangle(32 + offset, y, (SCREEN_WIDTH - 32) - offset, 112, menu_colors[i]);
+    const int offset = offset_full - 128 * smoothstep(menu->selection_lerp[i]);
+    DrawRectangle(32 + offset, y, (GetScreenWidth() - 32) - offset, 112, menu_colors[i]);
     const char *txt = menu_names[i];
     DrawText(txt, 192 + offset, y + 32, 48, BLACK);
-    y += 144;
+    y += stride;
   }
 
   return SCENE_HOME;

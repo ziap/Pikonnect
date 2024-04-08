@@ -52,14 +52,14 @@ static void update_size(GameMenu *menu, float w, float h) {
   const float gap_x = 8 * (w - 1);
   const float gap_y = 8 * (h - 1);
 
-  const float side_x = (SCREEN_WIDTH - gap_x) / (w + 2);
-  const float side_y = (SCREEN_HEIGHT - HEADER_HEIGHT - gap_y) / (h + 2);
+  const float side_x = (GetScreenWidth() - gap_x) / (w + 2);
+  const float side_y = (GetScreenHeight() - HEADER_HEIGHT - gap_y) / (h + 2);
 
   menu->grid_side = side_x < side_y ? side_x : side_y;
   if (menu->grid_side > 96) menu->grid_side = 96;
 
-  menu->x0 = (SCREEN_WIDTH - menu->grid_side * w - gap_x) / 2;
-  menu->y0 = (SCREEN_HEIGHT + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
+  menu->x0 = (GetScreenWidth() - menu->grid_side * w - gap_x) / 2;
+  menu->y0 = (GetScreenHeight() + HEADER_HEIGHT - menu->grid_side * h - gap_y) / 2;
 }
 
 static GameStatus remove_pair(Game *game, Path path) {
@@ -532,13 +532,13 @@ Scene Scene_game_update(Game *game, float dt) {
     render_path(menu);
   }
 
-  DrawRectangle(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, LIGHTGRAY);
+  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, LIGHTGRAY);
   char msg[1024];
   snprintf(msg, sizeof(msg), "Level: %d", game->config.level + 1);
   DrawText(msg, 32, 32, 32, BLACK);
 
   snprintf(msg, sizeof(msg), "Score: %d", menu->score);
-  DrawText(msg, SCREEN_WIDTH - MeasureText(msg, 32) - 32, 32, 32, BLACK);
+  DrawText(msg, GetScreenWidth() - MeasureText(msg, 32) - 32, 32, 32, BLACK);
 
   return SCENE_GAME;
 }

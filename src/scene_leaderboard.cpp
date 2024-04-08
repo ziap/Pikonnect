@@ -43,18 +43,18 @@ Scene Scene_leaderboard_update(Game *game, float dt) {
     return SCENE_HOME;
   }
 
-  int y = (SCREEN_HEIGHT + HEADER_HEIGHT - 112 * 5 + 16) / 2;
+  int y = (GetScreenHeight() + HEADER_HEIGHT - 112 * 5 + 16) / 2;
   int x = y - HEADER_HEIGHT;
   for (uint32_t i = 0; i < menu->top_len; ++i) {
     User *user = menu->top_users[i];
     Color banner = user == game->current_user ? palette[0] : LIGHTGRAY;
-    DrawRectangle(x, y, SCREEN_WIDTH - 2 * x, 96, banner);
+    DrawRectangle(x, y, GetScreenWidth() - 2 * x, 96, banner);
     char num[2] = { (char)(i + '1'), '\0' };
     DrawText(num, x + 24, y + 24, 48, DARKGRAY);
     DrawText(user->name, x + 72 + menu->index_width, y + 24, 48, BLACK);
     char score[1024];
     snprintf(score, sizeof(score), "%d", user->info.best_score);
-    int x_txt = x + SCREEN_WIDTH - MeasureText(score, 48) - 2 * x - 24;
+    int x_txt = x + GetScreenWidth() - MeasureText(score, 48) - 2 * x - 24;
     DrawText(score, x_txt, y + 24, 48, DARKGRAY);
     y += 112;
   }
