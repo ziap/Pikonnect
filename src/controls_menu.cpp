@@ -8,12 +8,6 @@ bool ControlsMenu_down() {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
   }
 
-  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-    if (IsKeyPressed(KEY_N) || IsKeyPressedRepeat(KEY_N)) {
-      return true;
-    }
-  }
-
   return false;
 }
 
@@ -21,12 +15,6 @@ bool ControlsMenu_up() {
   const KeyboardKey keys[] = { KEY_UP, KEY_K, KEY_W };
   for (KeyboardKey key : keys) {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
-  }
-
-  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-    if (IsKeyPressed(KEY_P) || IsKeyPressedRepeat(KEY_P)) {
-      return true;
-    }
   }
 
   return false;
@@ -47,12 +35,6 @@ bool ControlsMenu_left() {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
   }
 
-  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-    if (IsKeyPressed(KEY_B) || IsKeyPressedRepeat(KEY_B)) {
-      return true;
-    }
-  }
-
   return false;
 }
 
@@ -60,12 +42,6 @@ bool ControlsMenu_right() {
   const KeyboardKey keys[] = { KEY_RIGHT, KEY_L, KEY_D };
   for (KeyboardKey key : keys) {
     if (IsKeyPressed(key) || IsKeyPressedRepeat(key)) return true;
-  }
-
-  if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
-    if (IsKeyPressed(KEY_F) || IsKeyPressedRepeat(KEY_F)) {
-      return true;
-    }
   }
 
   return false;

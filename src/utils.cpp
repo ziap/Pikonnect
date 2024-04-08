@@ -5,8 +5,7 @@ float smoothstep(float t) {
   return t * t * (3.0f - 2.0f * t);
 }
 
-// Fast but not secure hash function
-// Copied from: https://code.google.com/archive/p/fast-hash/
+// Bit mixing function for fasthash64
 static uint64_t mix(uint64_t h) {
   h ^= h >> 23;
   h *= 0x2127599bf4325c37;
@@ -14,6 +13,9 @@ static uint64_t mix(uint64_t h) {
   return h;
 }
 
+// Fast but not secure hash function
+// Copied from: https://github.com/ztanml/fast-hash/
+// Line: 35
 uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed) {
 	const uint64_t    m = 0x880355f21e6d1965;
 	const uint64_t *pos = (const uint64_t *)buf;
@@ -46,6 +48,9 @@ uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed) {
 	return mix(h);
 }
 
+// Permuted congruential generator
+// An algorithm for generating pseudorandom numbers
+// Copied and modified from: https://www.pcg-random.org/download.html
 uint32_t pcg32(uint64_t *state) {
   uint64_t s = *state;
   *state = s * 0x5851f42d4c957f2d + 0x14057b7ef767814f;
@@ -55,6 +60,8 @@ uint32_t pcg32(uint64_t *state) {
   return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 
+// Unbiased random integer generation in a range, Lemire's method
+// Paper: https://arxiv.org/pdf/1805.10941.pdf
 uint32_t pcg32_bounded(uint64_t *state, uint32_t range) {
   uint32_t t = (-range) % range;
   uint32_t x, l;

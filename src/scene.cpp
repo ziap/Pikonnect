@@ -10,6 +10,14 @@
 #include "scene_over.h"
 #include "scene_leaderboard.h"
 
+// A Finite-state machine based scene management system.
+// Scenes are split into four parts:
+// - The data (stored in `game.h`)
+// - The load function
+// - The unload function
+// - The update function
+
+// A common functionality between scenes: Draw the header
 void Scene_draw_header(Game *game, const char *menu_name) {
   DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, LIGHTGRAY);
   DrawText(menu_name, 32, 32, 32, BLACK);
@@ -19,9 +27,13 @@ void Scene_draw_header(Game *game, const char *menu_name) {
   DrawText(msg, GetScreenWidth() - MeasureText(msg, 32) - 32, 32, 32, DARKGRAY);
 }
 
+// Some scenes do nothing while being unloaded
 static void Scene_unload_noop(Game *game) {
   (void)game;
 }
+
+// The load, update, and unload functions for each scenes are dynamically
+// dispatched using a table of function pointers.
 
 static void (*const Scene_load_functions[SCENE_LEN])(Game *game) = {
   Scene_login_load,
@@ -63,10 +75,12 @@ void Scene_deinit(Scene scene, Game *game) {
   Game_deinit(game);
 }
 
+// The update function is responsible for scene switching
 Scene Scene_update(Scene scene, Game *game, float dt) {
   Scene next_scene = Scene_update_functions[scene](game, dt);
 
   if (next_scene != scene) {
+    // Scene transition detected
     Scene_unload_functions[scene](game);
     Scene_load_functions[next_scene](game);
   }

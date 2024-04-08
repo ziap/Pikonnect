@@ -7,14 +7,17 @@
 
 #include "utils.h"
 
-const char data_path[] = "users.db";
+static const char data_path[] = "users.db";
 
+// Load data from the file
 void UserTable_load(UserTable *table) {
   FILE *f = fopen(data_path, "rb");
 
   if (f) {
+    // Read the length of the table
     fread(&table->names_len, sizeof(table->names_len), 1, f);
 
+    // Read the dynamically sized string
     table->names = (char*)malloc(table->names_len + 1);
     fread(table->names, table->names_len, 1, f);
     fread(&table->len, sizeof(table->len), 1, f);
@@ -22,12 +25,14 @@ void UserTable_load(UserTable *table) {
 
     char *ptr = table->names;
 
+    // Assign the name and read the users' data
     for (uint32_t i = 0; i < table->len; ++i) {
       table->data[i].name = ptr;
       ptr += strlen(ptr) + 1;
       fread(&table->data[i].info, sizeof(table->data[i].info), 1, f);
     }
   } else {
+    // File doesn't exist, create a new user table
     table->data = (User*)malloc(sizeof(User));
     table->len = 0;
     table->names = nullptr;
@@ -37,6 +42,7 @@ void UserTable_load(UserTable *table) {
   table->new_name = nullptr;
 }
 
+// Write data to a file
 void UserTable_save(UserTable *table) {
   FILE *f = fopen(data_path, "wb");
 
@@ -55,6 +61,7 @@ void UserTable_save(UserTable *table) {
     fprintf(stderr, "ERROR: Failed to save data to `%s`: %s\n", data_path, strerror(errno));
   }
 
+  // This is called when the program closes, so we also deallocate memories
   if (table->new_name) free(table->new_name);
   free(table->names);
   free(table->data);

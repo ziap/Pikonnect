@@ -4,7 +4,7 @@ CC="${CC:-g++}"
 CFLAGS="-std=c++11 -Wall -Wextra -Wdouble-promotion -Wno-implicit-fallthrough -pedantic"
 LDLIBS=""
 
-BUILD_FLAGS="-O3 -march=native -mtune=native -s"
+BUILD_FLAGS="-O3 -s"
 DEBUG_FLAGS="-Og -ggdb"
 
 RAYLIB_PATH="raylib-5.0_linux_amd64"

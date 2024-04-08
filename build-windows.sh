@@ -4,7 +4,7 @@ CC="${CC:-g++}"
 CFLAGS="-std=c++11 -Wall -Wextra -Wdouble-promotion -pedantic -Wno-implicit-fallthrough -Wl,--subsystem,windows"
 LDLIBS="-lopengl32 -lgdi32 -lwinmm"
 
-BUILD_FLAGS="-O3 -march=native -mtune=native -s"
+BUILD_FLAGS="-O3 -s"
 DEBUG_FLAGS="-Og -ggdb"
 
 RAYLIB_PATH="raylib-5.0_win64_mingw-w64"
