@@ -9,8 +9,8 @@ DEBUG_FLAGS="-Og -ggdb"
 
 RAYLIB_PATH="raylib-5.0_linux_amd64"
 
-$CC $CFLAGS $LDLIBS $BUILD_FLAGS -o src/sound/wav2h src/sound/wav2h.cpp -I$RAYLIB_PATH/include $RAYLIB_PATH/lib/libraylib.a
+$CC $CFLAGS $BUILD_FLAGS -o src/sound/wav2h src/sound/wav2h.cpp -I$RAYLIB_PATH/include $RAYLIB_PATH/lib/libraylib.a $LDLIBS
 
 ./src/sound/wav2h src/sound/*.wav
 
-$CC $CFLAGS $LDLIBS $BUILD_FLAGS -o game src/*.cpp -I$RAYLIB_PATH/include $RAYLIB_PATH/lib/libraylib.a
+$CC $CFLAGS $BUILD_FLAGS -o game src/*.cpp -I$RAYLIB_PATH/include $RAYLIB_PATH/lib/libraylib.a $LDLIBS
