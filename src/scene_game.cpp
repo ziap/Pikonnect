@@ -285,7 +285,7 @@ static void update_interpolation(GameMenu *menu, float dt) {
   menu->score_timer += dt;
   menu->hint_timer += dt;
   menu->collapse_timer += 5 * dt;
-  menu->background_timer += 2 * dt;
+  menu->background_timer += 0.02f * dt;
 }
 
 static void render_background(GameMenu *menu) {
@@ -301,9 +301,10 @@ static void render_background(GameMenu *menu) {
   for (int i = 0; i < BG_SQUARE_COUNT; ++i) {
     BackgroundSquare square = menu->background_squares[i];
     float side = side_min + side_range * square.side;
+    float freq = 0.2f + 0.8f * square.side;
 
-    int x = square.x * w - side * 0.5f + side_max * 4 * fbm(t / side, square.fbm_offset_x);
-    int y = HEADER_HEIGHT + square.y * h - side * 0.5f + side_max * 4 * fbm(t / side, square.fbm_offset_y);
+    int x = square.x * w - side * 0.5f + side_max * 4 * fbm(t / freq, square.fbm_offset_x);
+    int y = HEADER_HEIGHT + square.y * h - side * 0.5f + side_max * 4 * fbm(t / freq, square.fbm_offset_y);
     Color c = palette[square.col];
     c.a = 196;
     DrawRectangle(x, y, side, side, c);
