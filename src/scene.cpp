@@ -19,7 +19,7 @@
 
 // A common functionality between scenes: Draw the header
 void Scene_draw_header(Game *game, const char *menu_name) {
-  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, LIGHTGRAY);
+  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, { 117, 222, 254, 255 });
   DrawText(menu_name, 32, 32, 32, BLACK);
 
   char msg[1024];

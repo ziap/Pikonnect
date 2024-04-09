@@ -19,6 +19,7 @@ void GameBoard_init(GameBoard *board, int width, int height, int num_classes, ui
   int h = height + 4;
   int w = width + 4;
 
+  // Allocate a 2d array with a single malloc
   void *buf = malloc(h * sizeof(Tile*) + h * w * sizeof(Tile));
   board->data = (Tile**)buf + 2;
   board->data[-2] = (Tile*)(board->data + height + 2) + 2;

@@ -5,6 +5,8 @@
 #include "controls_menu.h"
 #include "utils.h"
 
+// A game over scene for both winning and losing.
+
 static const Color accent_color = { 0, 135, 204, 255 };
 
 static void draw_text_centered(const char* title, int y, int size, Color c) {
@@ -28,6 +30,9 @@ Scene Scene_won_update(Game *game, float dt) {
   draw_text_centered(msg, 318, 32, DARKGRAY);
 
   if (game->config.level + 1 < LEVEL_COUNT) {
+    // Not the last level, draw the next level button and the main menu button
+    // Also handle keyboard input for switching focus
+
     if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
       PlaySound(game->sounds[SOUND_CLICK]);
       menu->selection = (WonBtns)((menu->selection + WON_BTN_LEN - 1) % WON_BTN_LEN);
@@ -72,6 +77,7 @@ Scene Scene_won_update(Game *game, float dt) {
       x += text_width[i] + 64;
     }
   } else {
+    // There's no next level, only draw the home menu button
     if (ControlsMenu_confirm()) {
       PlaySound(game->sounds[SOUND_SELECT]);
       return SCENE_HOME;
@@ -94,6 +100,9 @@ Scene Scene_lost_update(Game *game, float dt) {
   (void)dt;
   draw_text_centered("You lost!", 150, 104, accent_color);
   draw_text_centered("No valid move left, try again?", 318, 32, DARKGRAY);
+
+  // Similar to the win scene with the next level button
+  // We have to draw two buttons and handle keyboard events
 
   if (ControlsMenu_left() || ControlsMenu_tab_prev()) {
     PlaySound(game->sounds[SOUND_CLICK]);

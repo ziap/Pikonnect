@@ -89,6 +89,9 @@ void Scene_login_load(Game *game) {
   menu->selected_textbox = TEXTBOX_USERNAME;
   menu->message[0] = '\0';
 
+  // Textboxes are implemented using a dynamic-array based stack, but instead of
+  // writing a separate data structure the implementation of the stack is
+  // inlined here
   const int INIT_CAP = 16;
   for (int i = 0; i < TEXTBOX_LEN; ++i) {
     menu->textboxes[i].input = (char*)malloc(INIT_CAP);
@@ -97,7 +100,7 @@ void Scene_login_load(Game *game) {
     menu->textboxes[i].cap = INIT_CAP;
   }
 
-  menu->max_width = MeasureText("username", 32);
+  menu->max_width = MeasureText(textbox_labels[0], 32);
   for (int i = 1; i < TEXTBOX_LEN; ++i) {
     int w = MeasureText(textbox_labels[i], 32);
     if (w > menu->max_width) menu->max_width = w;
@@ -132,6 +135,7 @@ Scene Scene_login_update(Game *game, float dt) {
 
   LoginTextBoxData *box = menu->textboxes + menu->selected_textbox;
   for (int k = GetCharPressed(); k; k = GetCharPressed()) {
+    // Push a character to the textbox stack
     if (k >= 0x20 && k < 0x7f) {
       if (box->len + 1 == box->cap) {
         box->cap *= 2;
@@ -145,6 +149,7 @@ Scene Scene_login_update(Game *game, float dt) {
 
   if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
     if (box->len) {
+      // Pop a character from the textbox stack
       box->input[--box->len] = '\0';
       menu->message[0] = '\0';
     }

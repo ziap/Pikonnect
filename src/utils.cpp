@@ -1,8 +1,24 @@
 #include "utils.h"
+#include <math.h>
 
 // Smoothstep function: https://en.wikipedia.org/wiki/Smoothstep
 float smoothstep(float t) {
   return t * t * (3.0f - 2.0f * t);
+}
+
+// Fractional Brownian Motion approximation with the sum of sines method
+// Source: https://thebookofshaders.com/13/
+//
+// Hardcoded values for lacunarity = 2 and gain = 0.5
+// The coefficients should be uniformly distributed in the range [0, 2pi)
+float fbm(float x, float c[5]) {
+  float result = 0;
+  result += sinf(x + c[0]);
+  result += 0.5f * sinf(2 * x + c[1]);
+  result += 0.25f * sinf(4 * x + c[2]);
+  result += 0.125f * sinf(8 * x + c[3]);
+  result += 0.0625f * sinf(16 * x + c[4]);
+  return result * 0.5161290322580645f;
 }
 
 // Bit mixing function for fasthash64

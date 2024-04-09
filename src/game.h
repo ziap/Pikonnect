@@ -44,6 +44,18 @@ struct LevelsMenu {
   float selection_lerp[LEVEL_COUNT];
 };
 
+const int BG_SQUARE_COUNT = 128;
+
+struct BackgroundSquare {
+  float x;
+  float y;
+  float side;
+  int col;
+
+  float fbm_offset_x[5];
+  float fbm_offset_y[5];
+};
+
 struct GameMenu {
   GameBoard board;
   Queue search_queue;
@@ -81,6 +93,9 @@ struct GameMenu {
   int grid_side;
   int x0;
   int y0;
+
+  BackgroundSquare background_squares[BG_SQUARE_COUNT];
+  float background_timer;
 };
 
 enum WonBtns {

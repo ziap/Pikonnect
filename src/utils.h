@@ -12,7 +12,8 @@
   #define unreachable __builtin_unreachable()
 #endif
 
-extern float smoothstep(float);
+extern float smoothstep(float t);
+extern float fbm(float x, float c[5]);
 
 extern uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed);
 extern uint32_t pcg32(uint64_t *state);

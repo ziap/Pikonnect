@@ -52,24 +52,24 @@ Vertex *Queue_dequeue(Queue *q) {
 
 // Expand a search vertex and push them to the queue
 static void push_queue(Queue *q, Vertex vertex) {
-  Index index_current = vertex.path.data[vertex.path.len - 1];
+  Index current = vertex.path.data[vertex.path.len - 1];
 
   // Continue going in the current direction by replacing the last segment in
   // the path
-  Vertex vertex_tmp = vertex;
-  Index index_next = Index_step(index_current, vertex.dir);
-  vertex_tmp.path.data[vertex_tmp.path.len - 1] = index_next;
-  Queue_enqueue(q, vertex_tmp);
+  Vertex tmp = vertex;
+  Index next = Index_step(current, vertex.dir);
+  tmp.path.data[tmp.path.len - 1] = next;
+  Queue_enqueue(q, tmp);
 
   // The path is less than 3 segments (4 pivots)
   // Rotate and push another segment to the path
   if (vertex.path.len < 4) {
     for (int i = 0; i < 2; i++) {
-      Vertex vertex_tmp = vertex;
-      vertex_tmp.dir = next_dirs[vertex.dir][i];
-      Index index_next = Index_step(index_current, next_dirs[vertex.dir][i]);
-      vertex_tmp.path.data[vertex_tmp.path.len++] = index_next;
-      Queue_enqueue(q, vertex_tmp);
+      Vertex tmp = vertex;
+      tmp.dir = next_dirs[vertex.dir][i];
+      Index next = Index_step(current, next_dirs[vertex.dir][i]);
+      tmp.path.data[tmp.path.len++] = next;
+      Queue_enqueue(q, tmp);
     }
   }
 }
@@ -82,30 +82,30 @@ static void push_start(Queue *q, Index index_current) {
   vertex.path.len = 1;
   
   for (int i = 0; i < DIR_LEN; i++) {
-    Vertex vertex_tmp = vertex;
-    vertex_tmp.dir = (Dir)i;
-    Index index_next = Index_step(index_current, vertex_tmp.dir);
+    Vertex tmp = vertex;
+    tmp.dir = (Dir)i;
+    Index next = Index_step(index_current, tmp.dir);
 
-    vertex_tmp.path.data[vertex_tmp.path.len++] = index_next;
-    Queue_enqueue(q, vertex_tmp);
+    tmp.path.data[tmp.path.len++] = next;
+    Queue_enqueue(q, tmp);
   }
 }
 
 // Check if the path matched by the user is valid
 Path Search_check_path(GameBoard board, Index start, Index end, Queue *q) {
-  int val_begin = board.data[start.y][start.x];
+  int val_start = board.data[start.y][start.x];
   int val_end = board.data[end.y][end.x];
-  if (val_begin != val_end || val_begin == 0) return { {}, 0 };
+  if (val_start != val_end || val_start == 0) return { {}, 0 };
 
   push_start(q, start);
 
   while (Vertex *top = Queue_dequeue(q)) {
-    Index index_current = top->path.data[top->path.len - 1];
-    if (index_current.y == end.y && index_current.x == end.x) {
+    Index current = top->path.data[top->path.len - 1];
+    if (current.y == end.y && current.x == end.x) {
       // The endpoints are connected by a path with less than 3 segments
       return top->path;
     }
-    if (board.data[index_current.y][index_current.x] == 0) {
+    if (board.data[current.y][current.x] == 0) {
       push_queue(q, *top);
     }
   }
