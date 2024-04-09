@@ -516,23 +516,25 @@ void Scene_game_load(Game *game) {
 
   uint64_t *rng = &game->current_user->info.random_state;
 
-  GameBoard_init(&menu->board, config.width, config.height, config.num_classes,
-                 rng);
+  GameBoard_init(&menu->board, config.width, config.height, config.num_classes, rng);
 
   Queue_init(&menu->search_queue);
 
   update_size(menu, menu->board.width, menu->board.height);
 
+  const float TAU = 6.283185307179586f;
+  const float range = (uint64_t)1 << 32;
+
   for (int i = 0; i < BG_SQUARE_COUNT; ++i) {
     BackgroundSquare *square = menu->background_squares + i;
-    square->x = (float)pcg32(rng) / (float)-1u;
-    square->y = (float)pcg32(rng) / (float)-1u;
-    square->side = (float)pcg32(rng) / (float)-1u;
+    square->x = (float)pcg32(rng) / range;
+    square->y = (float)pcg32(rng) / range;
+    square->side = (float)pcg32(rng) / range;
     square->col = pcg32_bounded(rng, config.num_classes);
 
     for (int i = 0; i < 5; ++i) {
-      square->fbm_offset_x[i] = (float)pcg32(rng) * 2 * (float)M_PI / (float)-1u;
-      square->fbm_offset_y[i] = (float)pcg32(rng) * 2 * (float)M_PI / (float)-1u;
+      square->fbm_offset_x[i] = (float)pcg32(rng) * TAU / range;
+      square->fbm_offset_y[i] = (float)pcg32(rng) * TAU / range;
     }
   }
   menu->background_timer = 0;
