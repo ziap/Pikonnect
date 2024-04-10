@@ -45,6 +45,7 @@ void GameBoard_init(GameBoard *board, int width, int height, int num_classes, ui
     board->data[height][i] = 0;
   }
 
+  // Place the pairs in increasing order with a random offset
   int idx = pcg32_bounded(random_state, num_classes) * 2;
   for (int i = 0; i < height; ++i) {
     for (int j = 0; j < width; ++j) {
@@ -52,6 +53,7 @@ void GameBoard_init(GameBoard *board, int width, int height, int num_classes, ui
     }
   }
 
+  // Shuffle the board
   int total = height * width;
   for (int i = 0; i < total - 1; ++i) {
     int j = pcg32_bounded(random_state, total - i) + i;
@@ -77,7 +79,7 @@ bool GameBoard_remove_row(GameBoard *board, int y) {
   for (int i = 0; i < board->width; ++i) {
     if (board->data[y][i]) return false;
   }
-  
+
   memmove(board->data + y, board->data + y + 1, (board->height - y + 1) * sizeof(Tile*));
 
   --board->height;

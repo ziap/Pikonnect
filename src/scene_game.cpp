@@ -28,6 +28,7 @@ enum GameStatus {
   STATUS_LOST
 };
 
+// This is repeated quite often so we put it in a function
 static Index tile_position(GameMenu *menu, Index tile) {
   return {
     menu->y0 + (menu->grid_side + 8) * tile.y,
@@ -35,6 +36,9 @@ static Index tile_position(GameMenu *menu, Index tile) {
   };
 }
 
+// Update the size every frame to take into account of:
+// - Row/column deletion
+// - Window resizing
 static void update_size(GameMenu *menu, float w, float h) {
   float t = menu->collapse_timer - 1;
   t *= t;
@@ -108,6 +112,7 @@ static GameStatus remove_pair(Game *game, Path path) {
   menu->path = path;
   menu->path_lerp = 0;
 
+  // Only check for game over after a move
   if (menu->remaining == 0) {
     UserInfo *info = &game->current_user->info;
     if (info->unlocked[game->config.gamemode] <= game->config.level) {
@@ -116,7 +121,7 @@ static GameStatus remove_pair(Game *game, Path path) {
 
     game->result.new_best = info->best_score < menu->score;
     if (game->result.new_best) {
-      info->best_score = menu->score; 
+      info->best_score = menu->score;
     }
 
     game->result.last_score = menu->score;
@@ -226,7 +231,7 @@ static GameStatus update_select(Game *game) {
           PlaySound(game->sounds[SOUND_CORRECT]);
           menu->selecting = false;
           menu->path_val = menu->board.data[menu->pos.y][menu->pos.x];
-        
+
           // Compute the length of the path for scoring
           int len = 1;
           for (int i = 1; i < path.len; ++i) {
@@ -273,6 +278,7 @@ static void update_suggest(Game *game) {
   }
 }
 
+// Update the timers independently for them to have different speeds and offsets
 static void update_interpolation(GameMenu *menu, float dt) {
   menu->path_lerp += 5 * dt;
   if (menu->path_lerp > 1) {
@@ -301,16 +307,17 @@ static void render_background(GameMenu *menu) {
   for (int i = 0; i < BG_SQUARE_COUNT; ++i) {
     BackgroundSquare square = menu->background_squares[i];
     float side = side_min + side_range * square.side;
-    float freq = 0.2f + 0.8f * square.side;
+    float tx = t * square.freq_x;
+    float ty = t * square.freq_y;
 
-    int x = square.x * w - side * 0.5f + side_max * 4 * fbm(t / freq, square.fbm_offset_x);
-    int y = HEADER_HEIGHT + square.y * h - side * 0.5f + side_max * 4 * fbm(t / freq, square.fbm_offset_y);
+    int x = square.x * w - side * 0.5f + side_max * 4 * fbm(tx, square.fbm_offset_x);
+    int y = HEADER_HEIGHT + square.y * h - side * 0.5f + side_max * 4 * fbm(ty, square.fbm_offset_y);
     Color c = palette[square.col];
-    c.a = 196;
+    c.a = 192;
     DrawRectangle(x, y, side, side, c);
   }
 
-  DrawRectangle(0, HEADER_HEIGHT, w, h, {255, 255, 255, 160});
+  DrawRectangle(0, HEADER_HEIGHT, w, h, {255, 255, 255, 128});
 }
 
 static void render_position(GameMenu *menu) {
@@ -352,19 +359,18 @@ static void render_board(GameMenu *menu) {
   int y = menu->y0;
   for (int i = 0; i < menu->board.height; ++i) {
     int x = menu->x0;
-
     // Add spaces between the previously deleted rows
     if (menu->collapse_timer < 2) {
       for (int j = 0; j < menu->collapse_row_len; ++j)  {
         if (i == menu->collapse_row[j]) {
           y += menu->grid_side + 8;
           if (menu->collapse_timer > 1) y -= t * (menu->grid_side + 8);
-        } 
+        }
       }
     }
     for (int j = 0; j < menu->board.width; ++j) {
       int val = menu->board.data[i][j];
-      
+
       // Add spaces between the previously deleted columns
       if (menu->collapse_timer < 2) {
         for (int k = 0; k < menu->collapse_col_len; ++k)  {
@@ -420,7 +426,7 @@ static void render_selection(GameMenu *menu) {
     c.r = c.r * 2 / 3;
     c.g = c.g * 2 / 3;
     c.b = c.b * 2 / 3;
-    
+
     const int x0 = ps.x - 4 - 4 * t;
     const int x1 = ps.x + 4 - 4 * t;
 
@@ -524,20 +530,32 @@ void Scene_game_load(Game *game) {
   update_size(menu, menu->board.width, menu->board.height);
 
   const float TAU = 6.283185307179586f;
-  const float range = (uint64_t)1 << 32;
+
+  float side = pcg32_expo(rng);
+  for (int i = 0; i < BG_SQUARE_COUNT; ++i) {
+    menu->background_squares[i].side = side;
+    side += pcg32_expo(rng);
+  }
 
   for (int i = 0; i < BG_SQUARE_COUNT; ++i) {
     BackgroundSquare *square = menu->background_squares + i;
-    square->x = (float)pcg32(rng) / range;
-    square->y = (float)pcg32(rng) / range;
-    square->side = (float)pcg32(rng) / range;
+    float norm_side = 1 - (square->side / side);
+
+    square->x = pcg32_uniform(rng);
+    square->y = pcg32_uniform(rng);
+    square->side = norm_side;
     square->col = pcg32_bounded(rng, config.num_classes);
 
+    float freq_norm = 0.2f + 0.8f * norm_side;
+
+    square->freq_x = (pcg32_uniform(rng) * 0.1f + 0.9f) / freq_norm;
+    square->freq_y = (pcg32_uniform(rng) * 0.1f + 0.9f) / freq_norm;
     for (int i = 0; i < 5; ++i) {
-      square->fbm_offset_x[i] = (float)pcg32(rng) * TAU / range;
-      square->fbm_offset_y[i] = (float)pcg32(rng) * TAU / range;
+      square->fbm_offset_x[i] = pcg32_uniform(rng) * TAU;
+      square->fbm_offset_y[i] = pcg32_uniform(rng) * TAU;
     }
   }
+
   menu->background_timer = 0;
 }
 
@@ -579,7 +597,7 @@ Scene Scene_game_update(Game *game, float dt) {
     render_path(menu);
   }
 
-  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, {117, 222, 254, 255});
+  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, {142, 228, 255, 255});
   char msg[1024];
   snprintf(msg, sizeof(msg), "Level: %d", game->config.level + 1);
   DrawText(msg, 32, 32, 32, BLACK);

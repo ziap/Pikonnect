@@ -59,6 +59,6 @@ bool ControlsMenu_tab_prev() {
   if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
     if (IsKeyPressed(KEY_TAB) || IsKeyPressedRepeat(KEY_TAB)) return true;
   }
-  
+
   return false;
 }

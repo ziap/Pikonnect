@@ -18,5 +18,7 @@ extern float fbm(float x, float c[5]);
 extern uint64_t fasthash64(const void *buf, uint64_t len, uint64_t seed);
 extern uint32_t pcg32(uint64_t *state);
 extern uint32_t pcg32_bounded(uint64_t *state, uint32_t range);
+extern float pcg32_uniform(uint64_t *state);
+extern float pcg32_expo(uint64_t *state);
 
 #endif

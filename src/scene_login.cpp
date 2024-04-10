@@ -19,11 +19,16 @@ static void render_labels(const char** labels, int x, int y) {
 }
 
 static void render_textboxes(int x, int y, int max_width, LoginTextBoxData *textboxes) {
+  // Get the last characters that fit inside the text box
   const char *ptr = textboxes[TEXTBOX_USERNAME].input;
   while (MeasureText(ptr, 32) > max_width) ++ptr;
   DrawText(ptr, x, y, 32, BLACK);
+
+  // Draw the asterisks
   char pwd[16];
   const LoginTextBoxData *pwd_box = textboxes + TEXTBOX_PASSWORD;
+
+  // Limit the character count to 15
   const int pwd_len = pwd_box->len < 15 ? pwd_box->len : 15;
   memset(pwd, '*', pwd_len);
   pwd[pwd_len] = 0;
@@ -106,6 +111,8 @@ void Scene_login_load(Game *game) {
     if (w > menu->max_width) menu->max_width = w;
   }
 
+  // Set the length of the textbox to the length of 15 asterisks to match the
+  // maximum asterisks count
   menu->input_width = MeasureText("***************", 32);
 }
 
@@ -168,6 +175,8 @@ Scene Scene_login_update(Game *game, float dt) {
     if (logged_in) {
       User *login_result = UserTable_login(&game->users, menu->textboxes[TEXTBOX_USERNAME].input, menu->textboxes[TEXTBOX_PASSWORD].input);
       if (login_result == nullptr) {
+        // Failed to log in
+        // Currently the only reason is that the password is incorrect
         snprintf(menu->message, sizeof(menu->message), "Wrong password for user %s!", menu->textboxes[TEXTBOX_USERNAME].input);
       } else {
         PlaySound(game->sounds[SOUND_SELECT]);

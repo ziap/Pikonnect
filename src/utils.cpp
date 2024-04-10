@@ -92,3 +92,26 @@ uint32_t pcg32_bounded(uint64_t *state, uint32_t range) {
   return m >> 32;
 }
 
+// Generate a 32-bit uniformly-distributed floating point number with lambda 1
+// Assumes IEEE single-precision format
+float pcg32_uniform(uint64_t *state) {
+  union {
+    float f;
+    uint32_t u;
+  } data;
+
+  // Set the sign and exponent bit with that of 1
+  data.f = 1;
+
+  // Fill the mantissa with random bits to generate a number from 1 to 2
+  data.u |= pcg32(state) >> 9;
+
+  // Convert the range back to [0, 1)
+  return data.f - 1;
+}
+
+// Generate a 32-bit exponentially-distributed floating point number
+float pcg32_expo(uint64_t *state) {
+  // ln(2^32) - ln(rand(x))
+  return 22.18070977791825f - logf(pcg32(state));
+}

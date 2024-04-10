@@ -4,6 +4,7 @@
 
 #include "palette.h"
 
+// Insert a user into the sorted leaderboard so that the leaderboard is still sorted
 static void insert_leaderboard(User **list, User *user, int pos) {
   int i = pos;
   uint32_t score = user->info.best_score;
@@ -18,16 +19,18 @@ void Scene_leaderboard_load(Game *game) {
   LeaderboardMenu *menu = &game->menu.leaderboard;
   UserTable table = game->users;
   menu->top_len = table.len < 5 ? table.len : 5;
-  
+
   for (uint32_t i = 0; i < menu->top_len; ++i) {
     insert_leaderboard(menu->top_users, table.data + i, i);
   }
 
-  User **last = menu->top_users + menu->top_len - 1;
-  for (uint32_t i = menu->top_len; i < table.len; ++i) {
+  // Use a double pointer because the pointer to the last user may change
+  User **last = menu->top_users + 4;
+  for (uint32_t i = 5; i < table.len; ++i) {
     User *user = table.data + i;
     if (user->info.best_score > (*last)->info.best_score) {
-      insert_leaderboard(menu->top_users, user, menu->top_len - 1);
+      // Remove the last user, insert the current user into the leaderboard
+      insert_leaderboard(menu->top_users, user, 4);
     }
   }
 

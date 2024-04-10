@@ -80,7 +80,7 @@ static void push_start(Queue *q, Index index_current) {
   Vertex vertex;
   vertex.path.data[0] = index_current;
   vertex.path.len = 1;
-  
+
   for (int i = 0; i < DIR_LEN; i++) {
     Vertex tmp = vertex;
     tmp.dir = (Dir)i;

@@ -18,7 +18,7 @@ int main() {
     float dt = GetFrameTime();
     BeginDrawing();
     ClearBackground(WHITE);
-  
+
     // Update the game
     scene = Scene_update(scene, &game, dt);
 

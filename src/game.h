@@ -7,6 +7,9 @@
 #include "user.h"
 #include "board_array.h"
 
+// This file contains all structures used for representing the game. It can be
+// split into several smaller files but this is good enough for now.
+
 struct LoginTextBoxData {
   char *input;
   int len;
@@ -40,11 +43,14 @@ struct HomeMenu {
 };
 
 struct LevelsMenu {
-  uint32_t current_selection; 
+  uint32_t current_selection;
   float selection_lerp[LEVEL_COUNT];
+
+  int grid_rows;
+  int grid_total;
 };
 
-const int BG_SQUARE_COUNT = 128;
+const int BG_SQUARE_COUNT = 64;
 
 struct BackgroundSquare {
   float x;
@@ -54,6 +60,8 @@ struct BackgroundSquare {
 
   float fbm_offset_x[5];
   float fbm_offset_y[5];
+  float freq_x;
+  float freq_y;
 };
 
 struct GameMenu {
@@ -89,7 +97,7 @@ struct GameMenu {
   int collapse_col_len;
 
   float collapse_timer;
-  
+
   int grid_side;
   int x0;
   int y0;
@@ -132,7 +140,7 @@ enum GameSounds {
 };
 
 struct Game {
-  // Global state
+  // These are data that can be accessed in any scene or game object
   UserTable users;
   User *current_user;
 
@@ -148,6 +156,9 @@ struct Game {
 
   Sound sounds[SOUND_LEN];
 
+  // These are data that are specific to a scene
+  // A union is used to save memory and to prevent data of a scene from leaking
+  // into another scene
   union {
     LoginMenu login;
     HomeMenu home;
