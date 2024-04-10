@@ -87,6 +87,7 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
 
   user->name = table->new_name;
   user->info.password_hash = hash;
+  user->info.passed_tutorial = false;
   user->info.best_score = 0;
   memset(user->info.unlocked, 0, sizeof(user->info.unlocked));
 

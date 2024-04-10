@@ -64,6 +64,14 @@ struct BackgroundSquare {
   float freq_y;
 };
 
+enum TutorialStage {
+  STAGE_MOVE,
+  STAGE_SELECT,
+  STAGE_CONNECT,
+  STAGE_OTHER,
+  STAGE_FINAL
+};
+
 struct GameMenu {
   GameBoard board;
   Queue search_queue;
@@ -104,6 +112,12 @@ struct GameMenu {
 
   BackgroundSquare background_squares[BG_SQUARE_COUNT];
   float background_timer;
+
+  bool is_tutorial;
+  struct {
+    TutorialStage stage;
+    float timer;
+  } tutorial;
 };
 
 enum WonBtns {

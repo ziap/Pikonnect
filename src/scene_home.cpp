@@ -15,6 +15,13 @@ void Scene_home_load(Game *game) {
 Scene Scene_home_update(Game *game, float dt) {
   HomeMenu *menu = &game->menu.home;
 
+  if (!game->current_user->info.passed_tutorial) {
+    game->config.level = 0;
+    game->config.gamemode = GAMEMODE_CLASSIC;
+
+    return SCENE_GAME;
+  }
+
   if (ControlsMenu_down() || ControlsMenu_tab_next()) {
     PlaySound(game->sounds[SOUND_CLICK]);
     menu->current_selection = (HomeSelection)((menu->current_selection + 1) % SELECTION_LEN);

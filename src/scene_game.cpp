@@ -179,6 +179,8 @@ static void update_move(Game *game, float dt) {
     }
   }
 
+  bool moved = false;
+
   const Dir opposite[DIR_LEN] = {DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT};
   for (int dir = 0; dir < DIR_LEN; ++dir) {
     if (dispatching[dir]) {
@@ -187,6 +189,7 @@ static void update_move(Game *game, float dt) {
 
       PlaySound(game->sounds[SOUND_CLICK]);
       menu->pos = Index_step(menu->pos, (Dir)dir);
+      moved = true;
     } else if (pressing[dir]) {
       // Cancel the auto shift of the opposite direction
       if (!pressing[opposite[dir]]) {
@@ -199,9 +202,16 @@ static void update_move(Game *game, float dt) {
           menu->as_delay[dir] = ARR;
           PlaySound(game->sounds[SOUND_CLICK]);
           menu->pos = Index_step(menu->pos, (Dir)dir);
+          moved = true;
         }
       }
     }
+  }
+
+  if (menu->is_tutorial && moved && menu->tutorial.stage == STAGE_MOVE &&
+      menu->tutorial.timer > TUTORIAL_COOLDOWN) {
+    menu->tutorial.stage = STAGE_SELECT;
+    menu->tutorial.timer = 0;
   }
 
   // Clamp the position
@@ -216,7 +226,20 @@ static GameStatus update_select(Game *game) {
   GameMenu *menu = &game->menu.game;
 
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+    if (menu->is_tutorial && menu->tutorial.stage == STAGE_OTHER &&
+        menu->tutorial.timer > TUTORIAL_COOLDOWN) {
+      menu->tutorial.stage = STAGE_FINAL;
+      menu->tutorial.timer = 0;
+      game->current_user->info.passed_tutorial = true;
+    }
+
     if (menu->board.data[menu->pos.y][menu->pos.x]) {
+      if (menu->is_tutorial && menu->tutorial.stage == STAGE_SELECT &&
+          menu->tutorial.timer > TUTORIAL_COOLDOWN) {
+        menu->tutorial.stage = STAGE_CONNECT;
+        menu->tutorial.timer = 0;
+      }
+
       if (!menu->selecting) {
         // Select the first tile
         PlaySound(game->sounds[SOUND_SELECT]);
@@ -249,6 +272,12 @@ static GameStatus update_select(Game *game) {
             menu->hinting = false;
           }
 
+          if (menu->is_tutorial && menu->tutorial.stage == STAGE_CONNECT &&
+              menu->tutorial.timer > TUTORIAL_COOLDOWN) {
+            menu->tutorial.stage = STAGE_OTHER;
+            menu->tutorial.timer = 0;
+          }
+
           return remove_pair(game, path);
         } else {
           // TODO: Use a different sound here
@@ -266,7 +295,7 @@ static GameStatus update_select(Game *game) {
 static void update_suggest(Game *game) {
   GameMenu *menu = &game->menu.game;
 
-  if (IsKeyPressed(KEY_X)) {
+  if (!menu->hinting && (IsKeyPressed(KEY_X) || (menu->is_tutorial && menu->tutorial.stage == STAGE_CONNECT && menu->tutorial.timer >= TUTORIAL_COOLDOWN))) {
     PlaySound(game->sounds[SOUND_SELECT]);
     Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
@@ -292,6 +321,8 @@ static void update_interpolation(GameMenu *menu, float dt) {
   menu->hint_timer += dt;
   menu->collapse_timer += 5 * dt;
   menu->background_timer += 0.02f * dt;
+
+  if (menu->is_tutorial) menu->tutorial.timer += dt;
 }
 
 static void render_background(GameMenu *menu) {
@@ -452,7 +483,7 @@ static void render_selection(GameMenu *menu) {
   }
 }
 
-void render_path(GameMenu *menu) {
+static void render_path(GameMenu *menu) {
   const float center = menu->grid_side * 0.5f;
 
   float x = 2 * menu->path_lerp - 1;
@@ -496,6 +527,67 @@ void render_path(GameMenu *menu) {
 
   DrawText(c, end_pos.x + 0.5f * (menu->grid_side - MeasureText(c, grid_text)),
            end_pos.y + grid_pad, grid_text, text_color);
+}
+
+static void render_tutorial(GameMenu *menu) {
+  if (!menu->is_tutorial) return;
+
+  if (menu->tutorial.timer < TUTORIAL_TRANSITION) {
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, (uint8_t)(192 * (1 - menu->tutorial.timer / TUTORIAL_TRANSITION)) });
+  } else if (menu->tutorial.stage < STAGE_FINAL) {
+    if (menu->tutorial.timer < TUTORIAL_COOLDOWN) {
+      if (menu->tutorial.timer >= TUTORIAL_COOLDOWN - TUTORIAL_TRANSITION) {
+        float t = (menu->tutorial.timer + TUTORIAL_TRANSITION - TUTORIAL_COOLDOWN) / TUTORIAL_TRANSITION;
+        if (t > 1) t = 1;
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, (uint8_t)(208 * t) });
+      }
+    } else {
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, 208 });
+      int w = GetScreenWidth();
+      int h = GetScreenHeight();
+      int center = (h - 48) / 2;
+
+      switch (menu->tutorial.stage) {
+        case STAGE_MOVE: {
+          const char msg[] = "WASD or ARROWS to move";
+          DrawText(msg, (w - MeasureText(msg, 48)) / 2, center, 48, LIGHTGRAY);
+        } break;
+        case STAGE_SELECT: {
+          const char msg[] = "SPACE or ENTER to select a tile";
+          DrawText(msg, (w - MeasureText(msg, 48)) / 2, center, 48, LIGHTGRAY);
+        } break;
+        case STAGE_CONNECT: {
+          {
+            const char msg[] = "Connect two matching tiles";
+            DrawText(msg, (w - MeasureText(msg, 48)) / 2, center - 32, 48, LIGHTGRAY);
+          }
+          {
+            const char msg[] = "with THREE or less lines";
+            DrawText(msg, (w - MeasureText(msg, 48)) / 2, center + 32, 48, LIGHTGRAY);
+          }
+        } break;
+        case STAGE_OTHER: {
+          {
+            const char msg[] = "Press X for a hint (no point)";
+            DrawText(msg, (w - MeasureText(msg, 48)) / 2, center - 128, 48, LIGHTGRAY);
+          }
+          {
+            const char msg[] = "Press Q to to back to the menu";
+            DrawText(msg, (w - MeasureText(msg, 48)) / 2, center - 64, 48, LIGHTGRAY);
+          }
+          {
+            const char msg[] = "You completed the tutorial!";
+            DrawText(msg, (w - MeasureText(msg, 32)) / 2, center + 48, 32, LIGHTGRAY);
+          }
+          {
+            const char msg[] = "Press ENTER to continue and complete the game";
+            DrawText(msg, (w - MeasureText(msg, 32)) / 2, center + 96, 32, LIGHTGRAY);
+          }
+        } break;
+        case STAGE_FINAL: break;
+      }
+    }
+  }
 }
 
 void Scene_game_load(Game *game) {
@@ -557,6 +649,12 @@ void Scene_game_load(Game *game) {
   }
 
   menu->background_timer = 0;
+
+  menu->is_tutorial = !game->current_user->info.passed_tutorial;
+  if (menu->is_tutorial) {
+    menu->tutorial.stage = STAGE_MOVE;
+    menu->tutorial.timer = TUTORIAL_COOLDOWN - TUTORIAL_TRANSITION;
+  }
 }
 
 Scene Scene_game_update(Game *game, float dt) {
@@ -571,7 +669,7 @@ Scene Scene_game_update(Game *game, float dt) {
   }
 
   update_suggest(game);
-  if (IsKeyPressed(KEY_Q)) return SCENE_HOME;
+  if (IsKeyPressed(KEY_Q)) if (!menu->is_tutorial) return SCENE_HOME;
 
   update_interpolation(menu, dt);
 
@@ -604,6 +702,8 @@ Scene Scene_game_update(Game *game, float dt) {
 
   snprintf(msg, sizeof(msg), "Score: %d", menu->score);
   DrawText(msg, GetScreenWidth() - MeasureText(msg, 32) - 32, 32, 32, BLACK);
+
+  render_tutorial(menu);
 
   return SCENE_GAME;
 }

@@ -6,6 +6,7 @@
 struct UserInfo {
   uint64_t password_hash;
   uint64_t random_state;
+  bool passed_tutorial = false;
   uint32_t best_score;
   uint32_t unlocked[GAMEMODE_LEN];
 };

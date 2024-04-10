@@ -7,7 +7,7 @@
 static const Color accent_color = { 0, 135, 204, 255 };
 
 static void render_title() {
-  const char title[] = "Pikachu Game";
+  const char title[] = "PIKONNECT";
   DrawText(title, (GetScreenWidth() - MeasureText(title, 72)) / 2, 150, 72, accent_color);
 }
 
