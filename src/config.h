@@ -19,6 +19,6 @@ const float DAS = 0.17;
 const float ARR = 0.07;
 
 const float TUTORIAL_TRANSITION = 0.3;
-const float TUTORIAL_COOLDOWN   = 2;
+const float TUTORIAL_COOLDOWN   = 3;
 
 #endif
