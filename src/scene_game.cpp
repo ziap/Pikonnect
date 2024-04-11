@@ -640,7 +640,7 @@ Scene Scene_game_update(Game *game, float dt) {
   update_suggest(game);
   if (IsKeyPressed(KEY_Q)) if (!menu->is_tutorial || menu->tutorial.stage == STAGE_FINAL) return SCENE_HOME;
 
-  if (!menu->is_tutorial || menu->tutorial.timer < TUTORIAL_COOLDOWN) {
+  if (!menu->is_tutorial || menu->tutorial.stage >= STAGE_FINAL || menu->tutorial.timer < TUTORIAL_COOLDOWN) {
     update_move(game, dt);
     switch (update_select(game)) {
       case STATUS_PLAYING: break;
@@ -648,7 +648,8 @@ Scene Scene_game_update(Game *game, float dt) {
       case STATUS_LOST: return SCENE_LOST;
     }
   } else {
-    if (menu->tutorial.stage < STAGE_FINAL && IsKeyPressed(KEY_ENTER)) {
+    if (IsKeyPressed(KEY_ENTER)) {
+      PlaySound(game->sounds[SOUND_SELECT]);
       menu->tutorial.stage = (TutorialStage)(menu->tutorial.stage + 1);
       menu->tutorial.timer = 0;
       if (menu->tutorial.stage == STAGE_FINAL) {
