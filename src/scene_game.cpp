@@ -137,11 +137,12 @@ static GameStatus remove_pair(Game *game, Path path) {
 
 // Compute the score bonus based on the time to find a match
 //
-// f(t) = (c0 * t^5 + c1 * t^4 + c2 * t^3 + c3 * t^2 + c4 * t + c5) * s
+// f(t, d) = (c0 * t^5 + c1 * t^4 + c2 * t^3 + c3 * t^2 + c4 * t + c5) * d
 //
-// f(0) = 10 * s
-// f(10) = s
-// f'(0) = f'(10) = f''(0) = f''(10) = 0
+// f(0, d) = 10 * d
+// f(5, d) = 5 * d
+// f(10, d) = d
+// f'(0, d) = f'(10, d) = f''(10, d) = 0
 static int score(float t, int s) {
   if (t > 10) return s;
   return (int)((500000 - ((27 * t - 675) * t + 4500) * t * t * t) * s + 25000) / 50000;
@@ -266,7 +267,9 @@ static GameStatus update_select(Game *game) {
 static void update_suggest(Game *game) {
   GameMenu *menu = &game->menu.game;
 
-  if (!menu->hinting && (IsKeyPressed(KEY_E) || (menu->is_tutorial && menu->tutorial.stage == STAGE_CONNECT && menu->tutorial.timer >= TUTORIAL_COOLDOWN))) {
+  if (menu->hinting) return;
+
+  if (IsKeyPressed(KEY_E) || (menu->is_tutorial && menu->tutorial.stage == STAGE_CONNECT && menu->tutorial.timer >= TUTORIAL_COOLDOWN)) {
     PlaySound(game->sounds[SOUND_SELECT]);
     Path path = Search_suggest_move(menu->board, &menu->search_queue);
     if (path.len >= 2) {
