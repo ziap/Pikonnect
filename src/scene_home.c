@@ -53,7 +53,7 @@ Scene Scene_home_update(Game *game, float dt) {
   const float anim_speed = 5;
   float *lerp = menu->selection_lerp + menu->current_selection;
   *lerp = *lerp < 1 ? *lerp + anim_speed * dt : 1;
-  for (int i = 0; i < menu->current_selection; ++i) {
+  for (HomeSelection i = 0; i < menu->current_selection; ++i) {
     lerp = menu->selection_lerp + i;
     *lerp = *lerp > 0 ? *lerp - anim_speed * dt : 0;
   }

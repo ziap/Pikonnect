@@ -2,9 +2,9 @@
 
 #include "scene.h"
 
-int main() {
+int main(void) {
   // Initalize the window
-  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
   InitWindow(1024, 768, "Pikachu game");
   InitAudioDevice();
 
@@ -15,7 +15,7 @@ int main() {
 
   while (!WindowShouldClose()) {
     // Reset the screen
-    float dt = GetFrameTime();
+    double dt = (double)GetFrameTime();
     BeginDrawing();
     ClearBackground(WHITE);
 

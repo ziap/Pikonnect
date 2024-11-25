@@ -65,4 +65,4 @@ Scene Scene_leaderboard_update(Game *game, float dt) {
   Scene_draw_header(game, "Leaderboard");
 
   return SCENE_LEADERBOARD;
-};
+}

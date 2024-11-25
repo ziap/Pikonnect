@@ -7,32 +7,32 @@
 #include "palette.h"
 #include "search.h"
 
-struct LevelConfig {
+typedef struct {
   int height;
   int width;
   int num_classes;
-};
+} LevelConfig;
 
 static const LevelConfig configs[LEVEL_COUNT] = {
-  {  6,  6,  6 },
-  {  6,  8,  9 },
-  {  7, 10, 13 },
-  {  8, 11, 16 },
-  {  9, 12, 20 },
-  { 10, 14, 26 },
+  { .height =  6, .width =  6, .num_classes =  6 },
+  { .height =  6, .width =  8, .num_classes =  9 },
+  { .height =  7, .width = 10, .num_classes = 13 },
+  { .height =  8, .width = 11, .num_classes = 16 },
+  { .height =  9, .width = 12, .num_classes = 20 },
+  { .height = 10, .width = 14, .num_classes = 26 },
 };
 
-enum GameStatus {
+typedef enum {
   STATUS_PLAYING,
   STATUS_WON,
   STATUS_LOST
-};
+} GameStatus;
 
 // This is repeated quite often so we put it in a function
 static Index tile_position(GameMenu *menu, Index tile) {
-  return {
-    menu->y0 + (menu->grid_side + 8) * tile.y,
-    menu->x0 + (menu->grid_side + 8) * tile.x,
+  return (Index) {
+    .y = menu->y0 + (menu->grid_side + 8) * tile.y,
+    .x = menu->x0 + (menu->grid_side + 8) * tile.x,
   };
 }
 
@@ -152,10 +152,10 @@ static int score(float t, int s) {
 static void update_move(Game *game, float dt) {
   GameMenu *menu = &game->menu.game;
   const KeyboardKey keys[DIR_LEN][3] = {
-    {KEY_UP, KEY_K, KEY_W},
-    {KEY_LEFT, KEY_H, KEY_A},
-    {KEY_DOWN, KEY_J, KEY_S},
-    {KEY_RIGHT, KEY_L, KEY_D},
+    [DIR_UP] = {KEY_UP, KEY_K, KEY_W},
+    [DIR_LEFT] = {KEY_LEFT, KEY_H, KEY_A},
+    [DIR_DOWN] = {KEY_DOWN, KEY_J, KEY_S},
+    [DIR_RIGHT] = {KEY_RIGHT, KEY_L, KEY_D},
   };
 
   // Check if directional keys are being pressed
@@ -168,7 +168,7 @@ static void update_move(Game *game, float dt) {
 
   // Check if directional keys are being pressed this frame
   bool dispatching[DIR_LEN] = {0};
-  for (int dir = 0; dir < DIR_LEN; ++dir) {
+  for (Dir dir = 0; dir < DIR_LEN; ++dir) {
     if (pressing[dir]) {
       if (!menu->dispatched[dir]) {
         dispatching[dir] = true;
@@ -180,8 +180,13 @@ static void update_move(Game *game, float dt) {
     }
   }
 
-  const Dir opposite[DIR_LEN] = {DIR_DOWN, DIR_RIGHT, DIR_UP, DIR_LEFT};
-  for (int dir = 0; dir < DIR_LEN; ++dir) {
+  const Dir opposite[DIR_LEN] = {
+    [DIR_UP] = DIR_DOWN,
+    [DIR_LEFT] = DIR_RIGHT,
+    [DIR_DOWN] = DIR_UP,
+    [DIR_RIGHT] = DIR_LEFT
+  };
+  for (Dir dir = 0; dir < DIR_LEN; ++dir) {
     if (dispatching[dir]) {
       menu->as_delay[dir] = DAS;
       menu->move_direction = (Dir)dir;
@@ -322,7 +327,7 @@ static void render_background(GameMenu *menu) {
     DrawRectangle(x, y, side, side, c);
   }
 
-  DrawRectangle(0, HEADER_HEIGHT, w, h, {255, 255, 255, 128});
+  DrawRectangle(0, HEADER_HEIGHT, w, h, (Color) {255, 255, 255, 128});
 }
 
 static void render_position(GameMenu *menu) {
@@ -483,7 +488,7 @@ static void render_path(GameMenu *menu) {
     Index c0 = tile_position(menu, menu->path.data[i - 1]);
     Index c1 = tile_position(menu, menu->path.data[i]);
 
-    DrawLineEx({c0.x + center, c0.y + center}, {c1.x + center, c1.y + center},
+    DrawLineEx((Vector2) {c0.x + center, c0.y + center}, (Vector2) {c1.x + center, c1.y + center},
                menu->grid_side * 0.12, path_color);
   }
 
@@ -507,16 +512,16 @@ static void render_tutorial(GameMenu *menu) {
   if (!menu->is_tutorial) return;
 
   if (menu->tutorial.timer < TUTORIAL_TRANSITION) {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, (uint8_t)(192 * (1 - menu->tutorial.timer / TUTORIAL_TRANSITION)) });
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color) { 0, 0, 0, (uint8_t)(192 * (1 - menu->tutorial.timer / TUTORIAL_TRANSITION)) });
   } else if (menu->tutorial.stage < STAGE_FINAL) {
     if (menu->tutorial.timer < TUTORIAL_COOLDOWN) {
       if (menu->tutorial.timer >= TUTORIAL_COOLDOWN - TUTORIAL_TRANSITION) {
         float t = (menu->tutorial.timer + TUTORIAL_TRANSITION - TUTORIAL_COOLDOWN) / TUTORIAL_TRANSITION;
         if (t > 1) t = 1;
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, (uint8_t)(208 * t) });
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color) { 0, 0, 0, (uint8_t)(208 * t) });
       }
     } else {
-      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), { 0, 0, 0, 208 });
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), (Color) { 0, 0, 0, 208 });
       int w = GetScreenWidth();
       int center = GetScreenHeight() / 2;
 
@@ -685,7 +690,7 @@ Scene Scene_game_update(Game *game, float dt) {
     render_path(menu);
   }
 
-  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, {142, 228, 255, 255});
+  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, (Color) {142, 228, 255, 255});
   char msg[1024];
   snprintf(msg, sizeof(msg), "Level: %d", game->config.level + 1);
   DrawText(msg, 32, 32, 32, BLACK);

@@ -1,24 +1,25 @@
 #ifndef USER_H
 #define USER_H
 
+#include <stdbool.h>
 #include "config.h"
 
-struct UserInfo {
+typedef struct {
   uint64_t password_hash;
   uint64_t random_state;
-  bool passed_tutorial = false;
+  bool passed_tutorial;
   uint32_t best_score;
   uint32_t unlocked[GAMEMODE_LEN];
-};
+} UserInfo;
 
 // The user is stored in a key-value pair, with the key being a dynamically
 // sized string and the value being statically sized variables
-struct User {
+typedef struct {
   char* name;
   UserInfo info;
-};
+} User;
 
-struct UserTable {
+typedef struct {
   // A region of null-separated names, this is done so that we don't have to
   // manage memory for individual names.
   char *names;
@@ -29,7 +30,7 @@ struct UserTable {
   char *new_name;
   User *data;
   uint32_t len;
-};
+} UserTable;
 
 extern void UserTable_load(UserTable *table);
 extern void UserTable_save(UserTable *table);

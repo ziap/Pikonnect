@@ -10,49 +10,49 @@
 // This file contains all structures used for representing the game. It can be
 // split into several smaller files but this is good enough for now.
 
-struct LoginTextBoxData {
+typedef struct {
   char *input;
   int len;
   int cap;
-};
+} LoginTextBoxData;
 
-enum LoginTextBox {
+typedef enum {
   TEXTBOX_USERNAME,
   TEXTBOX_PASSWORD,
   TEXTBOX_LEN
-};
+} LoginTextBox;
 
-struct LoginMenu {
+typedef struct {
   LoginTextBox selected_textbox;
   char message[64];
   LoginTextBoxData textboxes[TEXTBOX_LEN];
   int max_width;
   int input_width;
-};
+} LoginMenu;
 
-enum HomeSelection {
+typedef enum {
   SELECTION_CLASSIC,
   SELECTION_COLLAPSE,
   SELECTION_LEADERBOARD,
   SELECTION_LEN
-};
+} HomeSelection;
 
-struct HomeMenu {
+typedef struct {
   HomeSelection current_selection;
   float selection_lerp[SELECTION_LEN];
-};
+} HomeMenu;
 
-struct LevelsMenu {
+typedef struct {
   uint32_t current_selection;
   float selection_lerp[LEVEL_COUNT];
 
   int grid_rows;
   int grid_total;
-};
+} LevelsMenu;
 
-const int BG_SQUARE_COUNT = 64;
+#define BG_SQUARE_COUNT 64
 
-struct BackgroundSquare {
+typedef struct {
   float x;
   float y;
   float side;
@@ -62,17 +62,17 @@ struct BackgroundSquare {
   float fbm_offset_y[5];
   float freq_x;
   float freq_y;
-};
+} BackgroundSquare;
 
-enum TutorialStage {
+typedef enum {
   STAGE_MOVE,
   STAGE_SELECT,
   STAGE_CONNECT,
   STAGE_OTHER,
   STAGE_FINAL
-};
+} TutorialStage;
 
-struct GameMenu {
+typedef struct {
   GameBoard board;
   Queue search_queue;
 
@@ -118,42 +118,42 @@ struct GameMenu {
     TutorialStage stage;
     float timer;
   } tutorial;
-};
+} GameMenu;
 
-enum WonBtns {
+typedef enum {
   WON_BTN_NEXT,
   WON_BTN_MENU,
   WON_BTN_LEN
-};
+} WonBtns;
 
-enum LostBtns {
+typedef enum {
   LOST_BTN_RESTART,
   LOST_BTN_MENU,
   LOST_BTN_LEN
-};
+} LostBtns;
 
-struct WonMenu {
+typedef struct {
   WonBtns selection;
-};
+} WonMenu;
 
-struct LostMenu {
+typedef struct {
   LostBtns selection;
-};
+} LostMenu;
 
-struct LeaderboardMenu {
+typedef struct {
   User *top_users[5];
   uint32_t top_len;
   int index_width;
-};
+} LeaderboardMenu;
 
-enum GameSounds {
+typedef enum {
   SOUND_CLICK,
   SOUND_SELECT,
   SOUND_CORRECT,
   SOUND_LEN
-};
+} GameSounds;
 
-struct Game {
+typedef struct {
   // These are data that can be accessed in any scene or game object
   UserTable users;
   User *current_user;
@@ -182,7 +182,7 @@ struct Game {
     LostMenu lost;
     LeaderboardMenu leaderboard;
   } menu;
-};
+} Game;
 
 extern void Game_init(Game *game);
 extern void Game_deinit(Game *game);

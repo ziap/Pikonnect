@@ -8,10 +8,10 @@
 // Valid turing directions
 // Stored in an array for later iteration
 const Dir next_dirs[DIR_LEN][2] = {
-  {DIR_LEFT, DIR_RIGHT},
-  {DIR_UP, DIR_DOWN},
-  {DIR_LEFT, DIR_RIGHT},
-  {DIR_UP, DIR_DOWN}
+  [DIR_UP] = {DIR_LEFT, DIR_RIGHT},
+  [DIR_LEFT] = {DIR_UP, DIR_DOWN},
+  [DIR_DOWN] = {DIR_LEFT, DIR_RIGHT},
+  [DIR_RIGHT] = {DIR_UP, DIR_DOWN}
 };
 
 void Queue_clear(Queue *q) {
@@ -43,7 +43,7 @@ void Queue_enqueue(Queue *q, Vertex v) {
 }
 
 Vertex *Queue_dequeue(Queue *q) {
-  if (q->len == 0) return nullptr;
+  if (q->len == 0) return NULL;
   Vertex *v = q->data + q->tail;
   q->tail = (q->tail + 1) & (q->cap - 1);
   --q->len;
@@ -95,11 +95,12 @@ static void push_start(Queue *q, Index index_current) {
 Path Search_check_path(GameBoard board, Index start, Index end, Queue *q) {
   int val_start = board.data[start.y][start.x];
   int val_end = board.data[end.y][end.x];
-  if (val_start != val_end || val_start == 0) return { {}, 0 };
+  if (val_start != val_end || val_start == 0) return (Path) { .len = 0 };
 
   push_start(q, start);
 
-  while (Vertex *top = Queue_dequeue(q)) {
+  Vertex *top;
+  while ((top = Queue_dequeue(q))) {
     Index current = top->path.data[top->path.len - 1];
     if (current.y == end.y && current.x == end.x) {
       // The endpoints are connected by a path with less than 3 segments
@@ -110,7 +111,7 @@ Path Search_check_path(GameBoard board, Index start, Index end, Queue *q) {
     }
   }
 
-  return { {}, 0 };
+  return (Path) { .len = 0 };
 }
 
 // Find a valid move to suggest to the player
@@ -126,7 +127,8 @@ Path Search_suggest_move(GameBoard board, Queue *q) {
         // An empty tile is found, search for another tile with the same value
         push_start(q, start);
 
-        while (Vertex *top = Queue_dequeue(q)) {
+        Vertex *top;
+        while ((top = Queue_dequeue(q))) {
           Index current = top->path.data[top->path.len - 1];
           int val = board.data[current.y][current.x];
           if (val == target) return top->path;
@@ -136,5 +138,5 @@ Path Search_suggest_move(GameBoard board, Queue *q) {
     }
   }
 
-  return { {}, 0 };
+  return (Path) { .len = 0 };
 }

@@ -19,7 +19,7 @@
 
 // A common functionality between scenes: Draw the header
 void Scene_draw_header(Game *game, const char *menu_name) {
-  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, { 142, 228, 255, 255 });
+  DrawRectangle(0, 0, GetScreenWidth(), HEADER_HEIGHT, (Color) { 142, 228, 255, 255 });
   DrawText(menu_name, 32, 32, 32, BLACK);
 
   char msg[1024];
@@ -36,33 +36,33 @@ static void Scene_unload_noop(Game *game) {
 // dispatched using a table of function pointers.
 
 static void (*const Scene_load_functions[SCENE_LEN])(Game *game) = {
-  Scene_login_load,
-  Scene_home_load,
-  Scene_levels_load,
-  Scene_game_load,
-  Scene_won_load,
-  Scene_lost_load,
-  Scene_leaderboard_load,
+  [SCENE_LOGIN] = Scene_login_load,
+  [SCENE_HOME] = Scene_home_load,
+  [SCENE_LEVELS] = Scene_levels_load,
+  [SCENE_GAME] = Scene_game_load,
+  [SCENE_WON] = Scene_won_load,
+  [SCENE_LOST] = Scene_lost_load,
+  [SCENE_LEADERBOARD] = Scene_leaderboard_load,
 };
 
 static Scene (*const Scene_update_functions[SCENE_LEN])(Game *game, float dt) = {
-  Scene_login_update,
-  Scene_home_update,
-  Scene_levels_update,
-  Scene_game_update,
-  Scene_won_update,
-  Scene_lost_update,
-  Scene_leaderboard_update
+  [SCENE_LOGIN] = Scene_login_update,
+  [SCENE_HOME] = Scene_home_update,
+  [SCENE_LEVELS] = Scene_levels_update,
+  [SCENE_GAME] = Scene_game_update,
+  [SCENE_WON] = Scene_won_update,
+  [SCENE_LOST] = Scene_lost_update,
+  [SCENE_LEADERBOARD] = Scene_leaderboard_update
 };
 
 static void (*const Scene_unload_functions[SCENE_LEN])(Game *game) = {
-  Scene_login_unload,
-  Scene_unload_noop,
-  Scene_unload_noop,
-  Scene_game_unload,
-  Scene_unload_noop,
-  Scene_unload_noop,
-  Scene_unload_noop,
+  [SCENE_LOGIN] = Scene_login_unload,
+  [SCENE_HOME] = Scene_unload_noop,
+  [SCENE_LEVELS] = Scene_unload_noop,
+  [SCENE_GAME] = Scene_game_unload,
+  [SCENE_WON] = Scene_unload_noop,
+  [SCENE_LOST] = Scene_unload_noop,
+  [SCENE_LEADERBOARD] = Scene_unload_noop,
 };
 
 void Scene_init(Scene scene, Game *game) {

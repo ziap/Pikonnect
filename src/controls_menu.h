@@ -1,12 +1,14 @@
 #ifndef CONTROLS_MENU_H
 #define CONTROLS_MENU_H
 
-extern bool ControlsMenu_up();
-extern bool ControlsMenu_down();
-extern bool ControlsMenu_left();
-extern bool ControlsMenu_right();
-extern bool ControlsMenu_confirm();
-extern bool ControlsMenu_tab_next();
-extern bool ControlsMenu_tab_prev();
+#include <stdbool.h>
+
+extern bool ControlsMenu_up(void);
+extern bool ControlsMenu_down(void);
+extern bool ControlsMenu_left(void);
+extern bool ControlsMenu_right(void);
+extern bool ControlsMenu_confirm(void);
+extern bool ControlsMenu_tab_next(void);
+extern bool ControlsMenu_tab_prev(void);
 
 #endif

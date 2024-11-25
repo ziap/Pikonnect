@@ -6,10 +6,10 @@
 #include "utils.h"
 
 static const Index next_index[DIR_LEN] = {
-  {-1, 0},
-  {0, -1},
-  {1, 0},
-  {0, 1}
+  [DIR_UP] = {-1, 0},
+  [DIR_LEFT] = {0, -1},
+  [DIR_DOWN] = {1, 0},
+  [DIR_RIGHT] = {0, 1}
 };
 
 void GameBoard_init(GameBoard *board, int width, int height, int num_classes, uint64_t *random_state) {
@@ -72,7 +72,7 @@ void GameBoard_deinit(GameBoard *board) {
 
 Index Index_step(Index current, Dir dir) {
   Index next = next_index[dir];
-  return {current.y + next.y, current.x + next.x};
+  return (Index) {.y = current.y + next.y, .x = current.x + next.x};
 }
 
 bool GameBoard_remove_row(GameBoard *board, int y) {

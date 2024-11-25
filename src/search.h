@@ -3,26 +3,26 @@
 
 #include "board_array.h"
 
-struct Path {
+typedef struct {
   Index data[4];
   int len;
-};
+} Path;
 
-struct Vertex {
+typedef struct {
   Path path;
   Dir dir;
-};
+} Vertex;
 
 // Resizable circular buffer based queue
 // Faster than both linked list and std::queue
-struct Queue {
+typedef struct {
   Vertex *data;
   uint32_t head;
   uint32_t tail;
 
   uint32_t len;
   uint32_t cap;
-};
+} Queue;
 
 void Queue_clear(Queue *q);
 void Queue_init(Queue *q);

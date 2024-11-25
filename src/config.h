@@ -3,22 +3,22 @@
 
 #include <stdint.h>
 
-const int LEVEL_COUNT = 6;
+#define LEVEL_COUNT 6
 
-enum GameMode {
+typedef enum {
   GAMEMODE_CLASSIC,
   GAMEMODE_COLLAPSE,
   GAMEMODE_LEN
-};
+} GameMode;
 
-const int HEADER_HEIGHT = 96;
+#define HEADER_HEIGHT 96
 
-const uint64_t MAGIC = 0x9e3779b97f4a7c55;
+#define MAGIC 0x9e3779b97f4a7c55
 
-const float DAS = 0.17;
-const float ARR = 0.07;
+#define DAS 0.17f
+#define ARR 0.07f
 
-const float TUTORIAL_TRANSITION = 0.3;
-const float TUTORIAL_COOLDOWN   = 3;
+#define TUTORIAL_TRANSITION 0.3f
+#define TUTORIAL_COOLDOWN   3.0f
 
 #endif

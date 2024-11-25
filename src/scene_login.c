@@ -6,7 +6,7 @@
 
 static const Color accent_color = { 0, 135, 204, 255 };
 
-static void render_title() {
+static void render_title(void) {
   const char title[] = "PIKONNECT";
   DrawText(title, (GetScreenWidth() - MeasureText(title, 72)) / 2, 150, 72, accent_color);
 }
@@ -47,7 +47,7 @@ static void draw_underlines(int x, int y, int width, int selected)  {
   }
 }
 
-static bool is_pressing_down() {
+static bool is_pressing_down(void) {
   if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
     if (IsKeyPressed(KEY_N) || IsKeyPressedRepeat(KEY_N)) {
       return true;
@@ -63,7 +63,7 @@ static bool is_pressing_down() {
   return false;
 }
 
-static bool is_pressing_up() {
+static bool is_pressing_up(void) {
   if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
     if (IsKeyPressed(KEY_P) || IsKeyPressedRepeat(KEY_P)) {
       return true;
@@ -80,13 +80,13 @@ static bool is_pressing_up() {
 }
 
 static const char *textbox_names[TEXTBOX_LEN] = {
-  "username",
-  "password",
+  [TEXTBOX_USERNAME] = "username",
+  [TEXTBOX_PASSWORD] = "password",
 };
 
 static const char *textbox_labels[TEXTBOX_LEN] = {
-  "Username: ",
-  "Password: ",
+  [TEXTBOX_USERNAME] = "Username: ",
+  [TEXTBOX_PASSWORD] = "Password: ",
 };
 
 void Scene_login_load(Game *game) {
@@ -144,6 +144,7 @@ Scene Scene_login_update(Game *game, float dt) {
   for (int k = GetCharPressed(); k; k = GetCharPressed()) {
     // Push a character to the textbox stack
     if (k >= 0x20 && k < 0x7f) {
+      PlaySound(game->sounds[SOUND_CLICK]);
       if (box->len + 1 == box->cap) {
         box->cap *= 2;
         box->input = (char*)realloc(box->input, box->cap);
@@ -156,6 +157,7 @@ Scene Scene_login_update(Game *game, float dt) {
 
   if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
     if (box->len) {
+      PlaySound(game->sounds[SOUND_CLICK]);
       // Pop a character from the textbox stack
       box->input[--box->len] = '\0';
       menu->message[0] = '\0';
@@ -174,7 +176,7 @@ Scene Scene_login_update(Game *game, float dt) {
     }
     if (logged_in) {
       User *login_result = UserTable_login(&game->users, menu->textboxes[TEXTBOX_USERNAME].input, menu->textboxes[TEXTBOX_PASSWORD].input);
-      if (login_result == nullptr) {
+      if (login_result == NULL) {
         // Failed to log in
         // Currently the only reason is that the password is incorrect
         snprintf(menu->message, sizeof(menu->message), "Wrong password for user %s!", menu->textboxes[TEXTBOX_USERNAME].input);
@@ -203,7 +205,7 @@ Scene Scene_login_update(Game *game, float dt) {
   float y2 = y0 + 24;
   float y3 = y0 + 16;
   const Color selector_color = menu->message[0] ? RED : accent_color;
-  DrawTriangle({x2, y1}, {x2, y2}, {x1, y3}, selector_color);
+  DrawTriangle((Vector2) {x2, y1}, (Vector2) {x2, y2}, (Vector2) {x1, y3}, selector_color);
   DrawRectangle(x0 + menu->max_width, 320 + 32 * (menu->selected_textbox * 2 + 1), menu->input_width, 5, selector_color);
 
   const char login_msg[] = "Press [ENTER] to log in";

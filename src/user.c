@@ -35,11 +35,11 @@ void UserTable_load(UserTable *table) {
     // File doesn't exist, create a new user table
     table->data = (User*)malloc(sizeof(User));
     table->len = 0;
-    table->names = nullptr;
+    table->names = NULL;
     table->names_len = 0;
   }
 
-  table->new_name = nullptr;
+  table->new_name = NULL;
 }
 
 // Write data to a file
@@ -74,7 +74,7 @@ User *UserTable_login(UserTable *table, const char *username, const char *passwo
     User *user = table->data + i;
 
     if (strcmp(username, user->name) == 0) {
-      return hash == user->info.password_hash ? user : nullptr;
+      return hash == user->info.password_hash ? user : NULL;
     }
   }
 

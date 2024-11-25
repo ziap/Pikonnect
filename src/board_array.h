@@ -1,28 +1,29 @@
 #ifndef BOARD_ARRAY_H
 #define BOARD_ARRAY_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef int8_t Tile;
 
-struct GameBoard {
+typedef struct {
   Tile **data;
   int width;
   int height;
-};
+} GameBoard;
 
-struct Index {
+typedef struct {
   int y;
   int x;
-};
+} Index;
 
-enum Dir {
+typedef enum {
   DIR_UP,
   DIR_LEFT,
   DIR_DOWN,
   DIR_RIGHT,
   DIR_LEN
-};
+} Dir;
 
 extern void GameBoard_init(GameBoard *board, int width, int height,
                            int num_classes, uint64_t *random_state);

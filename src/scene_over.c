@@ -56,8 +56,8 @@ Scene Scene_won_update(Game *game, float dt) {
     }
 
     const char *btns[WON_BTN_LEN] = {
-      "Next level",
-      "Main menu",
+      [WON_BTN_NEXT] = "Next level",
+      [WON_BTN_MENU] = "Main menu",
     };
 
     int text_width[WON_BTN_LEN];
@@ -71,7 +71,7 @@ Scene Scene_won_update(Game *game, float dt) {
     total_width += 64 * (WON_BTN_LEN - 1);
     int y = 446;
     int x = (GetScreenWidth() - total_width) / 2;
-    for (int i = 0; i < WON_BTN_LEN; ++i) {
+    for (WonBtns i = 0; i < WON_BTN_LEN; ++i) {
       Color c = menu->selection == i ? accent_color : GRAY;
       DrawText(btns[i], x, y, 32, c);
       x += text_width[i] + 64;
@@ -124,8 +124,8 @@ Scene Scene_lost_update(Game *game, float dt) {
   }
 
   const char *btns[LOST_BTN_LEN] = {
-    "Retry level",
-    "Main menu",
+    [LOST_BTN_RESTART] = "Retry level",
+    [LOST_BTN_MENU] = "Main menu",
   };
 
   int text_width[LOST_BTN_LEN];
@@ -139,7 +139,7 @@ Scene Scene_lost_update(Game *game, float dt) {
   total_width += 64 * (LOST_BTN_LEN - 1);
   int y = 446;
   int x = (GetScreenWidth() - total_width) / 2;
-  for (int i = 0; i < LOST_BTN_LEN; ++i) {
+  for (LostBtns i = 0; i < LOST_BTN_LEN; ++i) {
     Color c = menu->selection == i ? accent_color : GRAY;
     DrawText(btns[i], x, y, 32, c);
     x += text_width[i] + 64;

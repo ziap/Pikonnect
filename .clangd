@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-Wall, -Wextra, -Wdouble-promotion, -pedantic, -I../raylib-5.0_linux_amd64/include, -std=c++11]
+  Add: [-Wall, -Wextra, -Wdouble-promotion, -pedantic, -I../raylib-5.0_linux_amd64/include, -std=c99]

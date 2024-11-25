@@ -3,7 +3,7 @@
 
 #include "game.h"
 
-enum Scene {
+typedef enum {
   SCENE_LOGIN,
   SCENE_HOME,
   SCENE_LEVELS,
@@ -12,7 +12,7 @@ enum Scene {
   SCENE_LOST,
   SCENE_LEADERBOARD,
   SCENE_LEN
-};
+} Scene;
 
 extern void Scene_draw_header(Game *game, const char *menu_name);
 extern void Scene_init(Scene scene, Game *game);
